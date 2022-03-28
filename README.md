@@ -23,7 +23,7 @@ There are two differents epchos, that esoReflex combine in a simgle block (COMBI
 SCI_RECONSTRUCTED_object.fits OBJECT_CUBE
 SCI_RECONSTRUCTED_sky.fits SKY_CUBE
 > NOTE: as far as I know you have to do this one by one. Meaning the .sof only can have on object file and one sky file. If it contains more they have to be commented.
-4. Use **sky_teawk** algortim with each one of the OBJECT_CUBE and SKY_CUBE to substrac the sky
+4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only o*ne* OBJECT_CUBE and  *one* SKY_CUBE at the time
 > NOTE: sky_teawk algortin give the same name each time, be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
 4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3 
 
