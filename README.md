@@ -2,8 +2,8 @@
 
 ##Rection fo Kmos data using esoReflex workflow.
 
-Since the sky and the target are in different observation blocks, we run esoReflex separetly for both block. 
-There are two differents epchos, that esoReflex combine in a simgle block (COMBINE_obs). 
+The sky and the target are in different observation blocks,so we run esoReflex separetly in both block. 
+There are two differents epochs, that esoReflex combine in a simgle block (COMBINE_obs). 
 1. Change the following parametres:
 > **Cube_reconstruction** actor on the canvas:
 >
@@ -11,20 +11,24 @@ There are two differents epchos, that esoReflex combine in a simgle block (COMBI
 >>
 >> **init_sky_tweak = FALSE
 
-> Directly on the cambas
+> Directly on the cambas (**Can´t remember why these ones**)
 > 
 >> **molefict/calctrans : false**
 >> **telluric and response correction : 0**
 
-2. Run for target block and sky block **separetly**.
+2. Run for target block and sky block **separately**.
 > You will get SCI_RECONSTRUCTED_object and SCI_RECONSTRUCTED_sky files.
 
-3. Createa .sof file (this is a regula text file with extension .sof) in this way:
+3. Createa .sof file (this is a regular text file with extension .sof) in this way:
 SCI_RECONSTRUCTED_object.fits OBJECT_CUBE
-SCI_RECONSTRUCTED_sky.fits SKY_CUBE
-> NOTE: as far as I know you have to do this one by one. Meaning the .sof only can have on object file and one sky file. If it contains more they have to be commented.
-4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only o*ne* OBJECT_CUBE and  *one* SKY_CUBE at the time
-> NOTE: sky_teawk algortin give the same name each time, be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
+ 
+SCI_RECONSTRUCTED_sky.fits SKY_CUBE 
+> NOTE: as far as I know you have to do this one by one. 
+>Meaning the .sof only can have on object file and one sky file. 
+>If it contains more they have to be commented.
+4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only *one* OBJECT_CUBE and  *one* SKY_CUBE at the time
+> NOTE: sky_teawk algortin give the same name each time, 
+>be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
 4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3 
 
 Additional scripts to esoReflex KMOS workflow
