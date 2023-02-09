@@ -34,7 +34,8 @@ SCI_RECONSTRUCTED_sky.fits SKY_CUBE
 > NOTE: as far as I know you have to do this one by one. 
 >Meaning the .sof only can have on object file and one sky file. 
 >If it contains more they have to be commented.
-4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only *one* OBJECT_CUBE and  *one* SKY_CUBE at the time
+4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only *one* OBJECT_CUBE and  *one* SKY_CUBE at the time.
+#### esorex kmos_sky_tweak data.sof
 > NOTE: sky_teawk algortin give the same name each time, 
 >be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
 4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3 
