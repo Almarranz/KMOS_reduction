@@ -4,6 +4,14 @@
 
 The sky and the target are in different observation blocks,so we run esoReflex separetly in both block. 
 There are two differents epochs, that esoReflex combine in a simgle block (COMBINE_obs). 
+___
+>NOTE: 
+>Each OBs block is divided in two halfs, in between wich the sky was taken. That
+>mean that the telescope moves and then alignment problem could arise when 
+>combined the two halfs. So, it woudl be convinient to reduce only one of the 
+>halfs and see the difference between reducing one and the two of then.
+__
+
 1. Change the following parametres:
 > **Cube_reconstruction** actor on the canvas:
 >
