@@ -38,6 +38,8 @@ SCI_RECONSTRUCTED_sky.fits SKY_CUBE
 #### esorex kmos_sky_tweak data.sof
 > NOTE: sky_teawk algortin give the same name each time, 
 >be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
-4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3 
+4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3.
+Creare a datasci.sof file with <path>/<file> SCI_RECONSTRUCTED adn then
+#### kmos_combine --method=header data_sci.sof
 
 Additional scripts to esoReflex KMOS workflow
