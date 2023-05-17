@@ -49,7 +49,5 @@ the combined image.
 > Note: you have to specify the folders with the scicience and sky cubes are 
 > in the script. Also, specify if you have **singles_cubes** or ** reconstructed_cubes**
 
-3. Createa .sof file (this is a regular text file with extension .sof) in this way:
-SCI_RECONSTRUCTED_object.fits OBJECT_CUBE
- 
+
 
