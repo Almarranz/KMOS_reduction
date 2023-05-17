@@ -46,22 +46,10 @@ create the sof files with the SCI_RECONSTRUCTED and SKY_RECONTRUCTED files,
 runs the  **sky_tweak** algortim. Then crates a sof file with cubes subtracted 
 by the sky and the runs **kmos_combine --method=header**  on it to generate 
 the combined image.
-> Note: you have to scpocify the folders with the scicience and sky cubes are 
+> Note: you have to specify the folders with the scicience and sky cubes are 
 > in the script. Also, specify if you have **singles_cubes** or ** reconstructed_cubes**
 
 3. Createa .sof file (this is a regular text file with extension .sof) in this way:
 SCI_RECONSTRUCTED_object.fits OBJECT_CUBE
  
-SCI_RECONSTRUCTED_sky.fits SKY_CUBE 
-> NOTE: as far as I know you have to do this one by one. 
->Meaning the .sof only can have on object file and one sky file. 
->If it contains more they have to be commented.
-4. Use **sky_tweak** algortim with the .sof file created in steep 3. **Remember**: only *one* OBJECT_CUBE and  *one* SKY_CUBE at the time.
-#### esorex kmos_sky_tweak data.sof
-> NOTE: sky_teawk algortin give the same name each time, 
->be sure you change it each time you running it (somethig like Ob_sky_tweak_file1.fits and so on)
-4. With **kmos_combine --method=header** combine the .fit files previously obtained in step 3.
-Creare a datasci.sof file with [path]/[file] SCI_RECONSTRUCTED adn then
-#### kmos_combine --method=header data_sci.sof
 
-Additional scripts to esoReflex KMOS workflow
