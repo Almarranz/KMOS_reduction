@@ -49,5 +49,9 @@ the combined image.
 > Note: you have to specify the folders with the scicience and sky cubes are 
 > in the script. Also, specify if you have **singles_cubes** or ** reconstructed_cubes**
 
+# Other scripts
+## SPECTRA
 
+spectra_combines.py. Extracts and plot spectra from .fits files obtained 
+diredctly with Qfitsview. 
 
