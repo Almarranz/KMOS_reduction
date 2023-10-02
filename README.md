@@ -5,7 +5,11 @@
 The sky and the target are in different observation blocks,so we run esoReflex separetly in both block. 
 There are two differents epochs, that esoReflex combine in a simgle block (COMBINE_obs). 
 
-Afeter visiting CAB in Madris we made some changes in the pipe line configuration:
+### WARNING!
+I have added at some point on my life a fits file called RESPONSE_KKK.fits. It seems that you need this file for the pipeline
+yield the results flux calibrated. I dont remember how I end up with this conclusio or where this file was located.
+
+Afeter visiting CAB in Madrid we made some changes in the pipe line configuration:
 > We ara going to use the standard star for the teluric correction
 > We are going to selecte 3 different wavelenghts ranges in the adjustement of the standard star
 >> this way the adjusmente will be bettwer in the different zones of the spectrum
@@ -55,3 +59,5 @@ the combined image.
 spectra_combines.py. Extracts and plot spectra from .fits files obtained 
 diredctly with Qfitsview. 
 
+cube_combine.py (is at iMac). It cut the different redcution according to the 
+walength used to fit the spaectrum and put the in a single cube.
