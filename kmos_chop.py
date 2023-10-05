@@ -6,7 +6,9 @@ Created on Tue Sep 26 13:41:51 2023
 @author: alvaromartinez
 """
 
-# Chops the KMOS images with the pourpose of a better alignment with GNS
+# CChop the selected ifus from each epoch. You have to open them in DS9 and 
+# check the pixel offset and correct it by hand, by modifing 
+# the parametres xp and yp
 import os
 import numpy as np
 import sys
