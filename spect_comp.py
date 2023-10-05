@@ -11,7 +11,7 @@ Created on Thu May 18 17:13:17 2023
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-
+import sys
 import astropy.units as u
 from astropy.utils.data import download_file
 from astropy.io import fits  # We use fits to open the actual data file
@@ -41,23 +41,45 @@ plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})# 
 # %%
-pruebas = '/Users/alvaromartinez/Desktop/Phd/KMOS/pruebas/'
-d_spec, u_spec = 2.10,2.4
+pruebas = '/Users/alvaromartinez/Desktop/Phd/KMOS/pruebas/spectra/'
+# d_spec, u_spec = 2.10,2.4
+d_spec, u_spec = 2.1,2.15
 fig, ax = plt.subplots(1,1)
-for st in range(1,3):
-    
-    name = 'spec_%s.fits'%(st)
-    print(name)
-    f = fits.open(pruebas + name)
-    specdata = f[0].data 
-    
-    cab = f[0].header
-    lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(len(specdata))] )
-    good = np.where((lam > d_spec) & (lam < u_spec))
-    specdata, lam  = specdata[good], lam[good]
-    ax.plot(lam,specdata,  label ='%s')
-
-
+stars = ['A']
+names = ['ifu7_105.fits','ifu7_107.fits', 'ifu7_mean.fits']
+per = ['5','7','mean']
+for st_ in stars:
+    for st in range(0,3):
+        
+        # name = 'spec_%s%s.fits'%(st_, st)
+        name = names[st]
+        print(name)
+        f = fits.open(pruebas + name)
+        specdata = f[0].data 
+        cab = f[0].header
+        lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(len(specdata))] )
+        good = np.where((lam > d_spec) & (lam < u_spec))
+        specdata, lam  = specdata[good], lam[good]
+        ax.plot(lam,specdata + st*0.1*1e-16,  label ='%s,SNR = %.2g'%(per[st],np.mean(specdata)/np.std(specdata)))
+        # ax.set_xlim(2.1,2.33)
+        ax.set_ylim(0,4e-17)
+        print(np.mean(specdata))
+        ax.legend(fontsize = 10)
+sys.exit('61')
+name = 'sky.fits'
+print(name)
+# fig, ax = plt.subplots(1,1)
+f = fits.open(pruebas + name)
+specdata_sky = f[0].data 
+cab = f[0].header
+lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(len(specdata))] )
+good = np.where((lam > d_spec) & (lam < u_spec))
+specdata_sky, lam  = specdata_sky[good], lam[good]
+ax.plot(lam,specdata_sky,  label ='sky', alpha = 0.5, ls ='dashed')
+# ax.legend()
+# # %% 
+# fig, ax = plt.subplots(1,1)
+# ax.scatter(np.arange(0,len(specdata)),specdata/specdata_sky)
 
 
 

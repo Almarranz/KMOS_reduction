@@ -48,50 +48,54 @@ plt.rcParams.update({'figure.max_open_warning': 0})#
 # %%
 cubA = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_A/2023-05-23T13:53:08/'
 # cubB = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_B/2023-05-23T17:51:34/'
-cubB = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_B/2023-09-25T17:17:01/'
+cubB = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_B/2023-09-28T17:02:33/'
 cubC = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_C/2023-05-24T12:54:32/'
-cubABC= '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_ABC/2023-05-20T22:05:16/'
+cubD= '/Users/alvaromartinez/Desktop/Phd/KMOS/p105_D/2023-09-27T16:18:13/'
 name = 'COMBINE_SKY_TWEAK_mapping.fits'
 pruebas = '/Users/alvaromartinez/Desktop/Phd/KMOS/pruebas/'
-cubs =[cubA, cubB, cubC]
 
-a_win = [1.975,1.987,1.993,2.010,2.041,2.060]
-abc_win = [2.060, 2.269]
-b_win = [2.269,2.291,2.308,2.335,2.360,2.379]
-c_win = [2.416,2.440,2.445,2.475]
+a_win = [1.975,1.987,1.993,2.010,2.041,2.06]
+d_win = [2.041,2.06,2.13,2.174,2.269,2.291,2.308,2.335,2.360,2.379]
+b_win = [2.041,2.06,2.13,2.174,2.269,2.291,2.308,2.335,2.360,2.379]
+c_win = [2.379,2.440,2.445,2.475]
 
 fitA = fits.open(cubA + name)
 fitB = fits.open(cubB + name)
 fitC = fits.open(cubC + name)
-fitABC =  fits.open(cubABC + name)
+fitD =  fits.open(cubD + name)
 lam_0 = fitA[1].header['CRVAL3']
 step =  fitA[1].header['CDELT3']
 
 lam_all =np.array([lam_0 + step*i for i in range(0,3072)])
 
 # %%
-# cut_A_up = np.where(abs(lam_all - a_win[-1]) == min(abs(lam_all - a_win[-1])))
-# cut_ABC_down = cut_A_up
-# cut_ABC_up = np.where(abs(lam_all - abc_win[-1]) == min(abs(lam_all - abc_win[-1])))
-# cut_B_up = np.where(abs(lam_all - b_win[-1]) == min(abs(lam_all - b_win[-1])))
-# cut_C_down = np.where(abs(lam_all - c_win[-1]) == min(abs(lam_all - b_win[-1])))
-
-
 cut_A_up = np.where(abs(lam_all - a_win[-1]) == min(abs(lam_all - a_win[-1])))
+cut_D_down = cut_A_up
+cut_D_up = np.where(abs(lam_all - d_win[-1]) == min(abs(lam_all - d_win[-1])))
 cut_B_up = np.where(abs(lam_all - b_win[-1]) == min(abs(lam_all - b_win[-1])))
+
+
+# cut_A_up = np.where(abs(lam_all - a_win[-1]) == min(abs(lam_all - a_win[-1])))
+# cut_B_up = np.where(abs(lam_all - b_win[-1]) == min(abs(lam_all - b_win[-1])))
 
 
 fit_all = np.zeros((fitC[1].data.shape[0],fitC[1].data.shape[1],fitC[1].data.shape[2]))
 fit_all_noise = np.zeros((fitC[1].data.shape[0],fitC[1].data.shape[1],fitC[1].data.shape[2]))
 
 
-fit_all[0:cut_A_up[0][0],:,:] = fitA[1].data[0:cut_A_up[0][0],:,:] 
-fit_all[cut_A_up[0][0]:cut_B_up[0][0],:,:]= fitB[1].data[cut_A_up[0][0]:cut_B_up[0][0],:,:]
-fit_all[cut_B_up[0][0]:,:,:] = fitC[1].data[cut_B_up[0][0]:,:,:]
+fit_all[0:cut_A_up[0][0],:,:] =              fitA[1].data[0:cut_A_up[0][0],:,:] 
+fit_all[cut_A_up[0][0]:cut_D_up[0][0],:,:] = fitD[1].data[cut_A_up[0][0]:cut_D_up[0][0],:,:]
+fit_all[cut_D_up[0][0]:cut_B_up[0][0],:,:] = fitB[1].data[cut_D_up[0][0]:cut_B_up[0][0],:,:]
+fit_all[cut_B_up[0][0]:,:,:] =               fitC[1].data[cut_B_up[0][0]:,:,:]
 
-fit_all_noise[0:cut_A_up[0][0],:,:] = fitA[2].data[0:cut_A_up[0][0],:,:] 
-fit_all_noise[cut_A_up[0][0]:cut_B_up[0][0],:,:]= fitB[2].data[cut_A_up[0][0]:cut_B_up[0][0],:,:]
-fit_all_noise[cut_B_up[0][0]:,:,:] = fitC[2].data[cut_B_up[0][0]:,:,:]
+fit_all_noise[0:cut_A_up[0][0],:,:] =                fitA[2].data[0:cut_A_up[0][0],:,:] 
+fit_all_noise[cut_A_up[0][0]:cut_D_up[0][0],:,:] =   fitD[2].data[cut_A_up[0][0]:cut_D_up[0][0],:,:]
+fit_all_noise[cut_D_up[0][0]:cut_B_up[0][0],:,:] =   fitB[2].data[cut_D_up[0][0]:cut_B_up[0][0],:,:]
+fit_all_noise[cut_B_up[0][0]:,:,:] =                 fitC[2].data[cut_B_up[0][0]:,:,:]
+
+# fit_all_noise[0:cut_A_up[0][0],:,:] = fitA[2].data[0:cut_A_up[0][0],:,:] 
+# fit_all_noise[cut_A_up[0][0]:cut_B_up[0][0],:,:]= fitB[2].data[cut_A_up[0][0]:cut_B_up[0][0],:,:]
+# fit_all_noise[cut_B_up[0][0]:,:,:] = fitC[2].data[cut_B_up[0][0]:,:,:]
 
 # A_wl = fitA[1].data[0:cut_A_up[0][0],:,:] 
 # B_wl = fitB[1].data[cut_A_up[0][0]:cut_B_up[0][0],:,:]
@@ -130,8 +134,8 @@ new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(fit_all, header=header1,name='DATA'))
 new_hdul.append(fits.ImageHDU(fit_all_noise,header=header1, name='ERROR'))
-new_hdul.writeto(pruebas + 'three_headers_2.fits',overwrite=True)
-sys.exit()
+new_hdul.writeto(pruebass + 'three_headers_2.fits',overwrite=True)
+sys.exit(134)
 # # %%
 # # 
 # # hdu2 = fits.ImageHDU([fitA[1].data])
