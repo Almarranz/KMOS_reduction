@@ -47,14 +47,18 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 # %%
 
 
-pruebas = '/Users/alvaromartinez/Desktop/Phd/KMOS/pruebas/'
+pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
+aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment/'
 
-log_7 = '/Users/alvaromartinez/Desktop/Phd/KMOS/p107/p107_ABC/log/kmos_combine_1/2023-10-02T19:13:38.496/'
-esorex_cube_7 = '/Users/alvaromartinez/Desktop/Phd/KMOS/p107/p107_ABC/2023-10-02T18:20:11/COMBINE_SKY_TWEAK_mapping.fits'
+log_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/'
+esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/COMBINE_SKY_TWEAK_mapping.fits'
 
 
-log_5 = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105/p105_ABC/log/kmos_combine_1/2023-09-29T15:10:04.845/'
-esorex_cube_5 = '/Users/alvaromartinez/Desktop/Phd/KMOS/p105/p105_ABC/2023-09-29T12:27:36/COMBINE_SKY_TWEAK_mapping.fits'
+log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/'
+esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/COMBINE_SKY_TWEAK_mapping.fits'
+
+
+ifu_sel = 7 #TODO
 
 dic_x5 = {}
 dic_y5 = {}
@@ -112,7 +116,7 @@ for ifu in range(1,24):
 ima_5 = fits.open(esorex_cube_5)
 ima5 = ima_5[1].data
 noise5 = ima_5[2].data
-ifu_sel = 7
+
 
 temp5 = np.zeros((3072,433,650))
 # temp5[:] = np.nan
@@ -134,15 +138,29 @@ new_hdul.append(fits.ImageHDU(temp5, header=header2,name='DATA'))
 ima_7 = fits.open(esorex_cube_7)
 ima7 = ima_7[1].data
 noise7 = ima_7[2].data
-ifu_sel = 7
+
 
 temp7 = np.zeros((3072,433,650))
 # temp_noise7 =  np.zeros((3072,433,650))
-yp = -2
-xp = -1
-temp7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = ima7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27+yp:max(dic_y7['ifu%s'%(ifu_sel)])+yp,min(dic_x7['ifu%s'%(ifu_sel)])-xp:max(dic_x7['ifu%s'%(ifu_sel)])+27-xp]
-# temp_noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27]
+xp, yp = np.loadtxt(aling + 'ifu%s_xy_plus.txt'%(ifu_sel),unpack = True)
+xp, yp = int(xp), int(yp)
+# yp = -2
+# xp = 10
+y_d = min(dic_y7['ifu%s'%(ifu_sel)])-27
+y_up = max(dic_y7['ifu%s'%(ifu_sel)])
+x_d = min(dic_x7['ifu%s'%(ifu_sel)])
+x_up = max(dic_x7['ifu%s'%(ifu_sel)])+27
 
+if x_up + xp > ima7.shape[2] or y_up + yp > ima7.shape[1] :
+    print('PAAAADDD')
+    pad = int(max(x_up + xp - ima7.shape[2],y_up + yp - ima7.shape[1]))
+    ima7 = np.pad(ima7,(0,pad), mode = 'constant') 
+    ima7 = ima7[:-pad,:,:]
+    
+temp7[:, y_d : y_up, x_d : x_up] =ima7[:, y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
+# temp7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = ima7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27+yp:max(dic_y7['ifu%s'%(ifu_sel)])+yp,min(dic_x7['ifu%s'%(ifu_sel)])+xp:max(dic_x7['ifu%s'%(ifu_sel)])+27+ xp]
+# temp_noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27]
+# sys.exit(161)
 header1 = ima_7[0].header
 header2 = ima_7[1].header
 header3 = ima_7[2].header
@@ -153,12 +171,13 @@ new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp7, header=header2,name='DATA'))
 # new_hdul.append(fits.ImageHDU(temp_noise7,header=header3, name='ERROR'))
 # new_hdul.writeto(pruebas + 'cube_ifu%s_%s.fits'%(ifu_sel,'p107'),overwrite=True)
-
+# %%
+fig, ax = plt.subplots(1,1,figsize=(8,8))
+ax.imshow(temp7[1550,:,:], vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
 # %%
 temp = np.mean([temp5,temp7],axis = 0)
 
-# %%
 new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
-new_hdul.writeto(pruebas + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
+new_hdul.writeto(aling + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
