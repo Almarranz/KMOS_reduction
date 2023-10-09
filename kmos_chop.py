@@ -46,7 +46,7 @@ plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})# 
 # %%
-period = 'p105'
+period = 'p107'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment/'
 if period == 'p107':
@@ -65,6 +65,7 @@ elif period == 'p105':
 ima_ = fits.open(esorex_ima)
 ima = ima_[1].data
 noise = ima_[2].data
+wcs = WCS(ima_[1].header)
 
 fig, ax = plt.subplots(1,1,figsize=(8,8))
 ax.imshow(ima, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
@@ -135,18 +136,21 @@ ifu_sel = 7
 
 # temp = np.zeros((433,650))
 # temp_noise =  np.zeros((433,650))
-temp = np.zeros((433,650))
-temp_noise =  np.zeros((433,650))
+y_d = int(min(dic_y['ifu%s'%(ifu_sel)])-27)
+y_up = int(max(dic_y['ifu%s'%(ifu_sel)]))
+x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
+x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
+temp = np.zeros((y_up-y_d, x_up-x_d))
+temp_noise =  np.zeros((y_up-y_d, x_up-x_d))
 if period == 'p105':
-    temp[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27] = ima[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-    temp_noise[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27] = noise[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
+    temp = ima[y_d:y_up, x_d:x_up]
+    # temp[217 : 325, 541 : 649] = ima[y_d:y_up, x_d:x_up]
+    temp_noise = noise[y_d:y_up, x_d:x_up]
+    ifu_header = wcs[y_d:y_up, x_d:x_up]
 elif period == 'p107':
     yp = -2# Negative move ifus upward
     xp = 1 # Negative move ifus to the right
-    y_d = min(dic_y['ifu%s'%(ifu_sel)])-27
-    y_up = max(dic_y['ifu%s'%(ifu_sel)])
-    x_d = min(dic_x['ifu%s'%(ifu_sel)])
-    x_up = max(dic_x['ifu%s'%(ifu_sel)])+27
+    
     # print('temp dim = %s,%s'%(min(dic_y['ifu%s'%(ifu_sel)])-27 - max(dic_y['ifu%s'%(ifu_sel)]), min(dic_x['ifu%s'%(ifu_sel)])-(max(dic_x['ifu%s'%(ifu_sel)])+27)))
     # print('ima dim = %s, %s'%(min(dic_y['ifu%s'%(ifu_sel)])-27+yp -  (max(dic_y['ifu%s'%(ifu_sel)])+yp) ,min(dic_x['ifu%s'%(ifu_sel)])+xp-(max(dic_x['ifu%s'%(ifu_sel)])+27+xp)))
   
@@ -158,7 +162,8 @@ elif period == 'p107':
         ima = np.pad(ima,(0,pad), mode = 'constant') 
         
         
-    temp[y_d : y_up, x_d : x_up] = ima[y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
+    temp = ima[y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
+    ifu_header = wcs[y_d+yp  : y_up+yp, x_d + xp : x_up +xp]
     # temp_noise[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27] = noise[min(dic_y['ifu%s'%(ifu_sel)])-27+yp:max(dic_y['ifu%s'%(ifu_sel)])+yp,min(dic_x['ifu%s'%(ifu_sel)])+xp:max(dic_x['ifu%s'%(ifu_sel)])+27+xp]
     np.savetxt(aling + 'ifu%s_xy_plus.txt'%(ifu_sel),np.array([[xp,yp]]),fmt = '%.0f',header = 'xp, yp') 
 header1 = ima_[0].header
@@ -219,6 +224,7 @@ header3 = ima_[2].header
 new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
+new_hdul[1].header.update(ifu_header.to_header())
 # new_hdul.append(fits.ImageHDU(temp_noise,header=header3, name='ERROR'))
 new_hdul.writeto(pruebas + 'ifu%s_%s.fits'%(ifu_sel,period),overwrite=True)
 
@@ -226,23 +232,25 @@ new_hdul.writeto(pruebas + 'ifu%s_%s.fits'%(ifu_sel,period),overwrite=True)
 fig, ax = plt.subplots(1,1,figsize=(8,8))
 ax.imshow(temp, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
 # %%
-header1
+
 #%%
-# Load the FITS image file
-hdul = fits.open(esorex_ima)
-# hdul[0].header['RADESYS'] = hdul[0].header['RADECSYS']
-# del hdul[0].header['RADECSYS']
-# Get the WCS information from the header
-wcs = WCS(hdul[1].header)
-
-wcs_subarray = wcs[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-
-subarray_data = ima[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-new_hdu = fits.PrimaryHDU(subarray_data)
-new_hdu.header.update(wcs_subarray.to_header())
-
-# Save the new FITS file
-new_hdu.writeto(pruebas + 'subarray_with_wcs.fits', overwrite=True)
+# =============================================================================
+# # Load the FITS image file
+# hdul = fits.open(esorex_ima)
+# # hdul[0].header['RADESYS'] = hdul[0].header['RADECSYS']
+# # del hdul[0].header['RADECSYS']
+# # Get the WCS information from the header
+# wcs = WCS(hdul[1].header)
+# 
+# wcs_subarray = wcs[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
+# 
+# subarray_data = ima[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
+# new_hdu = fits.PrimaryHDU(subarray_data)
+# new_hdu.header.update(wcs_subarray.to_header())
+# 
+# # Save the new FITS file
+# new_hdu.writeto(pruebas + 'subarray_with_wcs.fits', overwrite=True)
+# =============================================================================
 
 
 
