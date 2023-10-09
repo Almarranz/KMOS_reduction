@@ -181,3 +181,11 @@ new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
 new_hdul.writeto(aling + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
+
+
+
+
+
+
+
+
