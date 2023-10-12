@@ -20,6 +20,8 @@ from astropy.io import fits  # We use fits to open the actual data file
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.wcs import WCS
+
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -58,7 +60,8 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/'
 esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/COMBINE_SKY_TWEAK_mapping.fits'
 
 
-ifu_sel = 7 #TODO
+ifu_sel = 6 #TODO
+half_ifu = 2#TODO
 
 dic_x5 = {}
 dic_y5 = {}
@@ -113,43 +116,87 @@ for ifu in range(1,24):
             # dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts ),int)
 
 # %%
+
+
+if half_ifu == 0:
+    y_d = min(dic_y5['ifu%s'%(ifu_sel)])-27
+    y_up = max(dic_y5['ifu%s'%(ifu_sel)])
+    x_d = min(dic_x5['ifu%s'%(ifu_sel)])
+    x_up = max(dic_x5['ifu%s'%(ifu_sel)])+27
+elif half_ifu == 1:
+    y_d = int(min(dic_y5['ifu%s'%(ifu_sel)])-27)
+    y_up = np.unique(dic_y5['ifu%s'%(ifu_sel)])[1]
+    x_d = int(min(dic_x5['ifu%s'%(ifu_sel)]))
+    x_up = int(max(dic_x5['ifu%s'%(ifu_sel)])+27)
+elif half_ifu == 2:   
+    y_d = np.unique(dic_y5['ifu%s'%(ifu_sel)])[1]
+    y_up = np.unique(dic_y5['ifu%s'%(ifu_sel)])[3]
+    x_d = int(min(dic_x5['ifu%s'%(ifu_sel)]))
+    x_up = int(max(dic_x5['ifu%s'%(ifu_sel)])+27)
 ima_5 = fits.open(esorex_cube_5)
 ima5 = ima_5[1].data
 noise5 = ima_5[2].data
 
 
-temp5 = np.zeros((3072,433,650))
-# temp5[:] = np.nan
-# temp_noise5 =  np.zeros((3072,433,650))
-temp5[:,min(dic_y5['ifu%s'%(ifu_sel)])-27:max(dic_y5['ifu%s'%(ifu_sel)]),min(dic_x5['ifu%s'%(ifu_sel)]):max(dic_x5['ifu%s'%(ifu_sel)])+27] = ima5[:,min(dic_y5['ifu%s'%(ifu_sel)])-27:max(dic_y5['ifu%s'%(ifu_sel)]),min(dic_x5['ifu%s'%(ifu_sel)]):max(dic_x5['ifu%s'%(ifu_sel)])+27]
+temp5 = np.zeros((3072,-y_d+y_up, -x_d+x_up))
+# temp_noise5 =  np.zeros((3072,y_d-y_up, x_d-x_up))
+temp5 = ima5[:,y_d:y_up, x_d:x_up]
 # temp_noise5[:,min(dic_y5['ifu%s'%(ifu_sel)])-27:max(dic_y5['ifu%s'%(ifu_sel)]),min(dic_x5['ifu%s'%(ifu_sel)]):max(dic_x5['ifu%s'%(ifu_sel)])+27] = noise5[:,min(dic_y5['ifu%s'%(ifu_sel)])-27:max(dic_y5['ifu%s'%(ifu_sel)]),min(dic_x5['ifu%s'%(ifu_sel)]):max(dic_x5['ifu%s'%(ifu_sel)])+27]
 
 header1 = ima_5[0].header
 header2 = ima_5[1].header
 header3 = ima_5[2].header
 
+wcs = WCS(ima_5[1].header)
+ifu_header = wcs[y_d:y_up, x_d:x_up]
+
+
 new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp5, header=header2,name='DATA'))
+# new_hdul[1].header.update(ifu_header.to_header())
 # new_hdul.append(fits.ImageHDU(temp_noise5,header=header3, name='ERROR'))
-# new_hdul.writeto(pruebas + 'cube_ifu%s_%s.fits'%(ifu_sel,'p105'),overwrite=True)
+if half_ifu == 0:
+    new_hdul.writeto(pruebas + 'cube_ifu%s_%s.fits'%(ifu_sel,'p105'),overwrite=True)
+elif half_ifu != 0:
+    new_hdul.writeto(pruebas + 'cube_ifu%s_half%s_%s.fits'%(ifu_sel,half_ifu,'p105'),overwrite=True)
+# sys.exit('147')
 
+if half_ifu == 0:
+    y_d = min(dic_y7['ifu%s'%(ifu_sel)])-27
+    y_up = max(dic_y7['ifu%s'%(ifu_sel)])
+    x_d = min(dic_x7['ifu%s'%(ifu_sel)])
+    x_up = max(dic_x7['ifu%s'%(ifu_sel)])+27
+elif half_ifu == 1:
+    y_d = int(min(dic_y7['ifu%s'%(ifu_sel)])-27)
+    y_up = np.unique(dic_y7['ifu%s'%(ifu_sel)])[1]
+    x_d = int(min(dic_x7['ifu%s'%(ifu_sel)]))
+    x_up = int(max(dic_x7['ifu%s'%(ifu_sel)])+27)
+elif half_ifu == 2:   
+    y_d = np.unique(dic_y7['ifu%s'%(ifu_sel)])[1]
+    y_up = np.unique(dic_y7['ifu%s'%(ifu_sel)])[3]
+    x_d = int(min(dic_x7['ifu%s'%(ifu_sel)]))
+    x_up = int(max(dic_x7['ifu%s'%(ifu_sel)])+27)
 
 ima_7 = fits.open(esorex_cube_7)
 ima7 = ima_7[1].data
 noise7 = ima_7[2].data
 
+wcs = WCS(ima_7[1].header)
 
-temp7 = np.zeros((3072,433,650))
+temp7 = np.zeros((3072,-y_d+y_up, -x_d+x_up))
 # temp_noise7 =  np.zeros((3072,433,650))
-xp, yp = np.loadtxt(aling + 'ifu%s_xy_plus.txt'%(ifu_sel),unpack = True)
+if half_ifu == 0:
+    xp, yp = np.loadtxt(aling + 'ifu%s_xy_plus.txt'%(ifu_sel),unpack = True)
+    
+if half_ifu != 0:
+    xp, yp = np.loadtxt(aling + 'ifu%s_half%s_xy_plus.txt'%(ifu_sel, half_ifu),unpack = True)
 xp, yp = int(xp), int(yp)
 # yp = -2
 # xp = 10
-y_d = min(dic_y7['ifu%s'%(ifu_sel)])-27
-y_up = max(dic_y7['ifu%s'%(ifu_sel)])
-x_d = min(dic_x7['ifu%s'%(ifu_sel)])
-x_up = max(dic_x7['ifu%s'%(ifu_sel)])+27
+
+
+
 
 if x_up + xp > ima7.shape[2] or y_up + yp > ima7.shape[1] :
     print('PAAAADDD')
@@ -157,7 +204,7 @@ if x_up + xp > ima7.shape[2] or y_up + yp > ima7.shape[1] :
     ima7 = np.pad(ima7,(0,pad), mode = 'constant') 
     ima7 = ima7[:-pad,:,:]
     
-temp7[:, y_d : y_up, x_d : x_up] =ima7[:, y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
+temp7 =ima7[:, y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
 # temp7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = ima7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27+yp:max(dic_y7['ifu%s'%(ifu_sel)])+yp,min(dic_x7['ifu%s'%(ifu_sel)])+xp:max(dic_x7['ifu%s'%(ifu_sel)])+27+ xp]
 # temp_noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27]
 # sys.exit(161)
@@ -165,6 +212,7 @@ header1 = ima_7[0].header
 header2 = ima_7[1].header
 header3 = ima_7[2].header
 
+ifu_header = wcs[y_d:y_up, x_d:x_up]
 
 new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
@@ -180,7 +228,11 @@ temp = np.mean([temp5,temp7],axis = 0)
 new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
-new_hdul.writeto(aling + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
+# new_hdul[1].header.update(ifu_header.to_header())
+if half_ifu == 0:
+    new_hdul.writeto(aling + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
+elif half_ifu != 0:
+    new_hdul.writeto(aling + 'cube_ifu%s_half%s_mean.fits'%(ifu_sel, half_ifu),overwrite=True)
 
 
 
