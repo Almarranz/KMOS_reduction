@@ -57,15 +57,65 @@ elif period == 'p105':
     log = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/'
     esorex_ima = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'
 
-# ima = fits.getdata(pruebas + 'one_ABC.fits')
-# ima = np.squeeze(ima)
 
 
-# ima = fits.getdata(esorex_ima)
+
+
+
 ima_ = fits.open(esorex_ima)
 ima = ima_[1].data
 noise = ima_[2].data
 wcs = WCS(ima_[1].header)
+
+header1 = ima_[0].header
+header2 = ima_[1].header
+header3 = ima_[2].header
+
+# =============================================================================
+# paras = ['NAXIS1',	'NAXIS2',	
+#           'CRPIX1',	'CRPIX2',	
+#         'CRVAL1',	'CRVAL2',	
+#         'CD1_1',	'CD1_2',	
+#         'CD2_1',	'CD2_2']
+# if period =='p105':
+#     NAXIS1  = 650
+#     NAXIS2  = 433
+#     CRPIX1  = 313.73946895425433
+#     CRPIX2  = 323.77945829814655
+#     EQUINOX = 2000.0
+#     CRVAL1  = 266.384440107102
+#     CRVAL2  = -28.9444025
+# 
+#     CD1_1   = 7.3124987844013485E-6
+#     CD1_2   = 2.6520556700209487E-5
+#     CD2_1   = 2.6520556700209487E-5
+#     CD2_2   = -7.3124987844013485E-6
+#     
+# if period == 'p107':   
+#     NAXIS1  = 650
+#     NAXIS2  = 433
+#     CRPIX1  = 319.6167163349949
+#     CRPIX2  = 321.2200399618404
+#     EQUINOX = 2000.0
+#     CRVAL1  = 266.384440107102
+#     CRVAL2  = -28.9444025
+#     CD1_1   = 7.132068353100868E-6
+#     CD1_2   = 2.7043877610461897E-5
+#     CD2_1   = 2.7043877610461897E-5
+#     CD2_2   = -7.132068353100868E-6
+# 
+# 
+# new_para =[650,         433,
+#             CRPIX1,  CRPIX2,
+#             CRVAL1, CRVAL2,
+#             CD1_1,   CD1_2
+#             ,CD2_1, CD2_2]
+# for i, para in enumerate(paras):
+#     print(header2[para])
+#     header2[para] = new_para[i]
+#     header2[para] = new_para[i]
+# =============================================================================
+
 
 fig, ax = plt.subplots(1,1,figsize=(8,8))
 ax.imshow(ima, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
@@ -101,33 +151,7 @@ for ifu in range(1,24):
             # dic_x['ifu%s'%(ifu)] = np.asarray(np.rint(217 - x_shifts),int)
             # dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts ),int)
 
-# header1 = ima_[0].header
-# header2 = ima_[1].header
-# header3 = ima_[2].header
 
-# ifu_sel = 7
-
-# temp = np.zeros((433,650))
-# temp_noise =  np.zeros((433,650))
-# yp = -2
-# xp = -1
-# temp[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]), min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27] = ima[min(dic_y['ifu%s'%(ifu_sel)])-27+yp:max(dic_y['ifu%s'%(ifu_sel)])+yp, min(dic_x['ifu%s'%(ifu_sel)])-xp: max(dic_x['ifu%s'%(ifu_sel)])+27-xp]
-# temp_noise[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27] = noise[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-
-
-# new_hdul = fits.HDUList()
-# new_hdul.append(fits.PrimaryHDU(header=header1))
-# new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
-# new_hdul.append(fits.ImageHDU(temp_noise,header=header3, name='ERROR'))
-# new_hdul.writeto(pruebas + 'ifu%s_%s_not_aligned.fits'%(ifu_sel,period),overwrite=True)
-
-# %%
-# impa =np.pad(ima,(0,10), mode= 'constant')
-# fig, ax = plt.subplots(2,1,figsize=(8,8))
-# ax[1].imshow(impa, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
-# ax[0].imshow(ima, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
-# ax[0].scatter(500,200)
-# ax[1].scatter(500,200)
 # sys.exit('125')
 # %%
 
@@ -183,63 +207,9 @@ elif period == 'p107':
     elif half_ifu != 0:
         np.savetxt(aling + 'ifu%s_half%s_xy_plus.txt'%(ifu_sel,half_ifu),np.array([[xp,yp]]),fmt = '%.0f',header = 'xp, yp') 
 
-header1 = ima_[0].header
-header2 = ima_[1].header
-header3 = ima_[2].header
 
-# This part if for WCS alignment. We dont need this for now
-# =============================================================================
-# paras = ['NAXIS1',	'NAXIS2',	
-#          'CRPIX1',	'CRPIX2',	
-#         'CRVAL1',	'CRVAL2',	
-#         'CD1_1',	'CD1_2',	
-#         'CD2_1',	'CD2_2']
-# # if period = 'p105':
-#     # NAXIS1  = 650
-#     # NAXIS2  = 433
-#     # CRPIX1  = 313.73946895425433
-#     # CRPIX2  = 323.77945829814655
-#     # EQUINOX = 2000.0
-#     # CRVAL1  = 266.384440107102
-#     # CRVAL2  = -28.9444025
-#     # CTYPE1  = RA---TAN
-#     # CTYPE2  = DEC--TAN
-#     # RADECSYS= ICRS
-#     # CD1_1   = 7.3124987844013485E-6
-#     # CD1_2   = 2.6520556700209487E-5
-#     # CD2_1   = 2.6520556700209487E-5
-#     # CD2_2   = -7.3124987844013485E-6
-#     
-# # if period = 'p107':   
-#     # NAXIS1  = 650
-#     # NAXIS2  = 433
-#     # CRPIX1  = 319.6167163349949
-#     # CRPIX2  = 321.2200399618404
-#     # EQUINOX = 2000.0
-#     # CRVAL1  = 266.384440107102
-#     # CRVAL2  = -28.9444025
-#     # CTYPE1  = RA---TAN
-#     # CTYPE2  = DEC--TAN
-#     # RADECSYS= ICRS
-#     # CD1_1   = 7.132068353100868E-6
-#     # CD1_2   = 2.7043877610461897E-5
-#     # CD2_1   = 2.7043877610461897E-5
-#     # CD2_2   = -7.132068353100868E-6
-# 
-# 
-# new_para =[650,         433,
-#            319.6167163349949,  321.2200399618404,
-#            266.384440107102, -28.9444025,
-#            7.132068353100868E-6,   2.7043877610461897E-5
-#            ,2.7043877610461897E-5, -7.132068353100868E-6]
-# for i, para in enumerate(paras):
-#     print(header2[para])
-#     header2[para] = new_para[i]
-#     header3[para] = new_para[i]
-# 
-# =============================================================================
 new_hdul = fits.HDUList()
-new_hdul.append(fits.PrimaryHDU(header=header1))
+new_hdul.append(fits.PrimaryHDU(header=header2))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
 new_hdul[1].header.update(ifu_header.to_header())
 # new_hdul.append(fits.ImageHDU(temp_noise,header=header3, name='ERROR'))
@@ -252,41 +222,73 @@ fig, ax = plt.subplots(1,1,figsize=(8,8))
 ax.imshow(temp, vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
 # %%
 
-#%%
-# =============================================================================
-# # Load the FITS image file
-# hdul = fits.open(esorex_ima)
-# # hdul[0].header['RADESYS'] = hdul[0].header['RADECSYS']
-# # del hdul[0].header['RADECSYS']
-# # Get the WCS information from the header
-# wcs = WCS(hdul[1].header)
+# This part if for WCS alignment. We dont need this for now
+
+period = 'p105'#TODO
+pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
+aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment/'
+if period == 'p107':
+    log = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/'
+    esorex_ima = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'
+
+elif period == 'p105':
+    log = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/'
+    esorex_ima = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'
+
+imagen = fits.open(esorex_ima)
+cab0 = imagen[0].header
+cab1 = imagen[1].header
+cab2 = imagen[2].header
+paras = ['NAXIS1',	'NAXIS2',	
+          'CRPIX1',	'CRPIX2',	
+        'CRVAL1',	'CRVAL2',	
+        'CD1_1',	'CD1_2',	
+        'CD2_1',	'CD2_2']
+if period =='p105':
+    NAXIS1  = 650
+    NAXIS2  = 433
+    CRPIX1  = 313.73946895425433
+    CRPIX2  = 323.77945829814655
+    EQUINOX = 2000.0
+    CRVAL1  = 266.384440107102
+    CRVAL2  = -28.9444025
+
+    CD1_1   = 7.3124987844013485E-6
+    CD1_2   = 2.6520556700209487E-5
+    CD2_1   = 2.6520556700209487E-5
+    CD2_2   = -7.3124987844013485E-6
+    
+if period == 'p107':   
+    NAXIS1  = 650
+    NAXIS2  = 433
+    CRPIX1  = 319.6167163349949
+    CRPIX2  = 321.2200399618404
+    EQUINOX = 2000.0
+    CRVAL1  = 266.384440107102
+    CRVAL2  = -28.9444025
+    CD1_1   = 7.132068353100868E-6
+    CD1_2   = 2.7043877610461897E-5
+    CD2_1   = 2.7043877610461897E-5
+    CD2_2   = -7.132068353100868E-6
+
+
+new_para =[650,         433,
+            CRPIX1,  CRPIX2,
+            CRVAL1, CRVAL2,
+            CD1_1,   CD1_2
+            ,CD2_1, CD2_2]
+for i, para in enumerate(paras):
+    print(cab1[para])
+    cab1[para] = new_para[i]
+    cab2[para] = new_para[i]
+
+hdul = fits.HDUList()
+hdul.append(fits.PrimaryHDU(header=cab0))
+hdul.append(fits.ImageHDU(imagen[1].data, header=cab1,name='DATA'))
+hdul.writeto(pruebas + 'mapping_ima_%s_align.fits'%(period),overwrite=True)
+
+# %%
 # 
-# wcs_subarray = wcs[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-# 
-# subarray_data = ima[min(dic_y['ifu%s'%(ifu_sel)])-27:max(dic_y['ifu%s'%(ifu_sel)]),min(dic_x['ifu%s'%(ifu_sel)]):max(dic_x['ifu%s'%(ifu_sel)])+27]
-# new_hdu = fits.PrimaryHDU(subarray_data)
-# new_hdu.header.update(wcs_subarray.to_header())
-# 
-# # Save the new FITS file
-# new_hdu.writeto(pruebas + 'subarray_with_wcs.fits', overwrite=True)
-# =============================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
