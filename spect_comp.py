@@ -48,8 +48,11 @@ pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 ifu_sel = 6
 half_ifu = 1
 
+# reduction, rang = 'ABC',4
+# reduction, rang = 'tramos',0
+# reductions = ['ABC', 'tramos']
+reductions = ['ABC']
 
-spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/regular_reduction/young_candidates/'
 ima_f = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment/'
 
 ifu_ima = fits.open(ima_f  + 'ifu%s_half%s_p105.fits'%(ifu_sel,half_ifu))
@@ -62,9 +65,9 @@ COII = 2.32246
 Brg = 2.165
 He = 2.12
 HeII = 2.189
-d_spec, u_spec = 2.06,2.12 # Feautureless
-# d_spec, u_spec = HeI-0.05,2.33
-# d_spec, u_spec = 2.0,2.4
+# d_spec, u_spec = 2.06,2.12 # Feautureless
+# d_spec, u_spec = COI,COI+0.03
+d_spec, u_spec = 1.93,2.45
 l_names = ['HeI', 'COI', 'COII','Br$\gamma$', 'He', 'HeII']
 lines = [HeI, COI, COII,Brg, He, HeII]
 with open(pruebas + 'yso_ifu%s.reg'%(ifu_sel),'w') as reg:
@@ -72,42 +75,48 @@ with open(pruebas + 'yso_ifu%s.reg'%(ifu_sel),'w') as reg:
     reg.close
 fig, ax = plt.subplots(1,1, figsize=(10,10))
 
-
-for st in range(0,7):
-
-    if half_ifu == 0:
-        name = glob.glob(spec_folder + 'ifu_%s/'%(ifu_sel) +'star*')[st]
-    elif half_ifu != 0:
-        name = glob.glob(spec_folder + 'ifu_%s/'%(ifu_sel) + 'half_%s/'%(half_ifu)+'star*')[st]
-     
-    if 'starA_' in name:
-        xy_in = name[name.find('starA_')+6:name.find('starA_')+5+8]
-        x_coor, y_coor = float(xy_in[0:3]), float(xy_in[4:6])
-        print( x_coor, y_coor)
-    else:
-        xy_in = name[name.find('star_')+5:name.find('star_')+5+5]
-        x_coor, y_coor = float(xy_in[0:2]), float(xy_in[3:5])
+ind=0
+cnst = 0
+# for st in range(rang,rang+1):
+for ind in range(ind,ind+7):
+    for reduction in reductions:
+        cnst = cnst +1
+        spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/'%(reduction)
+        for st in range(ind,ind+1):
+            
+            if half_ifu == 0:
+                name = glob.glob(spec_folder + 'ifu_%s/'%(ifu_sel) +'star*')[st]
+            elif half_ifu != 0:
+                name = glob.glob(spec_folder + 'ifu_%s/'%(ifu_sel) + 'half_%s/'%(half_ifu)+'star*')[st]
+             
+            if 'starA_' in name:
+                xy_in = name[name.find('starA_')+6:name.find('starA_')+5+8]
+                x_coor, y_coor = float(xy_in[0:3]), float(xy_in[4:6])
+                print( x_coor, y_coor)
+            else:
+                xy_in = name[name.find('star_')+5:name.find('star_')+5+5]
+                x_coor, y_coor = float(xy_in[0:2]), float(xy_in[3:5])
+                
+            coor =wcs.wcs_pix2world(x_coor,y_coor,1)
+            
+            
+           
+            f = fits.open(name)
+            specdata = f[0].data 
+            cab = f[0].header
+            lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(len(specdata))] )
+            good = np.where((lam > d_spec) & (lam < u_spec))
+            specdata, lam  = specdata[good], lam[good]
+            ax.plot(lam,specdata + (cnst*3)*1e-16,  label ='%s,%s,SNR = %.2g, %s'%(st,xy_in, np.mean(specdata)/np.std(specdata), reduction))
+            # ax.set_xlim(2.,2.33)
+            
+            print(np.mean(specdata))
+            ax.legend(fontsize = 10,loc =2)
+            with open(pruebas + 'yso_ifu%s.reg'%(ifu_sel),'a') as reg:
+                reg.write('# text(%s,%s) text={%s,SN = %.1f}\n'%(coor[0],coor[1],st,np.mean(specdata)/np.std(specdata)))
+                reg.close
         
-    coor =wcs.wcs_pix2world(x_coor,y_coor,1)
-    
-    
-   
-    f = fits.open(name)
-    specdata = f[0].data 
-    cab = f[0].header
-    lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(len(specdata))] )
-    good = np.where((lam > d_spec) & (lam < u_spec))
-    specdata, lam  = specdata[good], lam[good]
-    ax.plot(lam,specdata + st*1*1e-16,  label ='%s,%s,SNR = %.2g'%(st,xy_in, np.mean(specdata)/np.std(specdata)))
-    # ax.set_xlim(2.1,2.33)
-    # ax.set_ylim(0,3e-17)
-    print(np.mean(specdata))
-    ax.legend(fontsize = 10,loc =4)
-    with open(pruebas + 'yso_ifu%s.reg'%(ifu_sel),'a') as reg:
-        reg.write('# text(%s,%s) text={%s,SN = %.1f}\n'%(coor[0],coor[1],st,np.mean(specdata)/np.std(specdata)))
-        reg.close
-
-ax.set_title('IFU %s'%(ifu_sel))
+ax.set_title('IFU %s (%s)'%(ifu_sel,reduction))
 for l in lines:
     ax.axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed')
 ax.set_xticks(lines)
@@ -119,7 +128,10 @@ tl = l_names
 # tl[0]='2.16\nBr$\gamma$'
 ax.set_xticklabels(tl)
 
-ax.set_xlim(d_spec-0.01, u_spec+0.01)
+ax.yaxis.set_ticks(np.arange(3e-16, 7e-16, 0.5e-16))
+# ax.set_ylim(0.5e-16,1.5e-16)
+ax.set_xlim(d_spec, u_spec)
+ax.grid(axis= 'y')
 sys.exit('123')
 name = 'sky.fits'
 print(name)
