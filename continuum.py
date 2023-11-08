@@ -122,12 +122,13 @@ elif half_ifu == 2:
 
 cube = ima[1].data
 cube = cube[:,y_d:y_up, x_d:x_up]
+cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 v_min =1
 v_max = 0
 
-im = ax.imshow(ima_1[1].data[y_d:y_up, x_d:x_up], cmap='Greys', origin='lower',vmin=0.001e-16,vmax = 0.1e-16,alpha =1)
+im = ax.imshow(cube_im, cmap='Greys', origin='lower',vmin=0.001e-16,vmax = 0.1e-16,alpha =1)
 # sys.exit('131')
 # square = Rectangle((x - w/2, y - w/2), w, w, linewidth=1, edgecolor='r', facecolor='none')
 # ax.add_patch(square)
@@ -136,17 +137,20 @@ im = ax.imshow(ima_1[1].data[y_d:y_up, x_d:x_up], cmap='Greys', origin='lower',v
 
 x = None
 y = None
-w = 5#TODO
-def extract_spec(cube,y,x,wide):
-    spec = cube[:,x-wide:x+wide+1,y-wide:y+wide+1]
+wide = 6#TODO
+w = int(wide/2)
+def extract_spec(cube,y,x):
+    spec = cube[:,x-w:x+w+1,y-w:y+w+1]
     spec_mean = np.mean(spec, axis =(1,2)) 
     # spec = spec.flatten()
     return spec_mean
 
 # Function to update the plot with the clicked point
-def update_plot():
+def update_plot(x,y):
+    x = int(np.rint(x))
+    y = int(np.rint(y))
     plt.scatter(x, y, color='red', marker='x', s=100)  # Customize the marker style
-    square = Rectangle((x - w/2, y - w/2), w, w, linewidth=1, edgecolor='r', facecolor='none')
+    square = Rectangle((x - wide/2-0.5, y - wide/2-0.5), wide, wide, linewidth=1, edgecolor='r', facecolor='none')
     ax.add_patch(square)
     ax.text(x-w/2,y-w/1.2,'%.0f,%.0f'%(x,y), color = 'r',fontsize = 15)
     plt.draw()  # Redraw the plot with the updated point
@@ -172,19 +176,33 @@ def plot_spec(flux):
     ax2.set_ylabel('flux')
     ax2.legend()
     
-
+def bright(y,x):
+    x = int(np.rint(x))
+    y = int(np.rint(y))
+    around = cube_im[y-w:y+w,x-w:x+w]
+    bright_x, bright_y = np.unravel_index(around.argmax(), around.shape)
+    bright_flux = np.max(around)
+    x = x-(w-bright_y)
+    y = y-(w-bright_x)
+    print( bright_flux,  bright_x,bright_y)
+    print('max flus at:x = %s, y = %s'%(x-(w-bright_y),y-(w-bright_x)))
+    return x,y 
 
 def onclick(event):
     global x, y  # Use global variables
     if event.xdata is not None and event.ydata is not None:
         x = event.xdata
-        y = event.ydata
-        flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), 2)
-        update_plot()
+        y = event.ydata 
+        x = int(np.rint(x))
+        y = int(np.rint(y))
+        x,y = bright(y,x)
+        flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
+        update_plot(x,y)
         plot_spec(flux)
+        
         sig = np.nanstd(flux)/2
         print(f'Clicked at x={x}, y={y}')
-        print(sig)
+       
     
 
 
