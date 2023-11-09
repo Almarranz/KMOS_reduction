@@ -22,6 +22,7 @@ from matplotlib.colors import LogNorm
 from matplotlib.tri import Triangulation
 import regions
 from matplotlib.patches import Rectangle
+from matplotlib.patches import Circle
 import IPython
 # %%plotting pa    metres
 from matplotlib import rc
@@ -50,6 +51,7 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 # %%
 # Enable automatic plotting mode
 IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 reduction = 'ABC'
@@ -61,22 +63,13 @@ esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_grou
 log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
-
-
-
-
-ima = fits.open(esorex_cube_5)
-mapa = WCS(ima[1].header).celestial
-h0 = ima[0].header
-h1 = ima[1].header
-
-ima_1 = fits.open(esorex_ima_5)
-h0_1 = ima_1[0].header
-h1_1 = ima_1[1].header
-
 # %%
 half_ifu = 1
-ifu_sel = 7
+ifu_sel = 6
+
+aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
+
+
 dic_x = {}
 dic_y = {}
 for ifu in range(1,24):
@@ -120,29 +113,76 @@ elif half_ifu == 2:
 
 # %%
 
+# ima = fits.open(esorex_cube_5)
+
+
+ima = fits.open(aligned_cube)
+mapa = WCS(ima[1].header).celestial
+
+h0 = ima[0].header
+h1 = ima[1].header
+
+# This is the header for the spectrum fits file
+h_esp = h1.copy()
+h_esp['CRVAL1'] = h_esp['CRVAL3']
+h_esp['CDELT1'] = h_esp['CDELT3']
+h_esp['CTYPE1'] = 'WAVE'
+h_esp['CUNIT1'] = 'um'
+del h_esp['CRVAL3'], h_esp['CRVAL2'], h_esp['CDELT2'], h_esp['CDELT3']
+
+ima_1 = fits.open(esorex_ima_5)
+wcs = WCS(ima[1].header)
+h0_1 = ima_1[0].header
+h1_1 = ima_1[1].header
+
 cube = ima[1].data
-cube = cube[:,y_d:y_up, x_d:x_up]
+
+# cube = cube[:,y_d:y_up, x_d:x_up]
 cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
 
-fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-v_min =1
-v_max = 0
+fig, ax = plt.subplots(1,1,figsize =(10,10)) 
+#Uncomment this for the WCS projection 
+# ax.axis("off")
+# ax = plt.subplot(projection=wcs,slices=(1000, 'y', 'x'))
+v_min =0.0005e-16
+v_max = 0.05e-16
 
-im = ax.imshow(cube_im, cmap='Greys', origin='lower',vmin=0.001e-16,vmax = 0.1e-16,alpha =1)
-# sys.exit('131')
-# square = Rectangle((x - w/2, y - w/2), w, w, linewidth=1, edgecolor='r', facecolor='none')
-# ax.add_patch(square)
-# ax.set_xlim(b-w*2,b+w*2)
-# ax.set_ylim(a-w*2,a+w*2)
+cube_plot = np.nanmean(cube, axis = 0)
+# im = ax.imshow(cube_im, cmap='Greys', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+im = ax.imshow(cube_plot, cmap='BrBG_r', 
+               label='overlays',origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+# fig.colorbar(im, ax=ax, orientation='vertical')
+
+# x, y = 62,43
+# yy,xx = np.indices(cube_im.shape)
+# distances = np.sqrt((xx - x)**2 + (yy - y)**2)
+# mask = np.where(distances <=3)
+# values = cube[:,mask[0],mask[1]]
+# spec = np.mean(values, axis = 1)
+# ax.scatter(mask[1],mask[0],color = 'r')
+
 
 x = None
 y = None
-wide = 6#TODO
+wide = 4#TODO
 w = int(wide/2)
 def extract_spec(cube,y,x):
-    spec = cube[:,x-w:x+w+1,y-w:y+w+1]
-    spec_mean = np.mean(spec, axis =(1,2)) 
-    # spec = spec.flatten()
+    # yy,xx = np.indices(cube_im.shape)
+    xx,yy = np.indices(cube_im.shape)
+    distances = np.sqrt((xx - x)**2 + (yy - y)**2)
+    mask = np.where(distances <=w)
+    spec = cube[:,mask[0],mask[1]]
+    spec_mean = np.mean(spec, axis = 1)
+    ax.scatter(mask[1],mask[0],color = 'r')
+
+    # spec = cube[:,x-w:x+w+1,y-w:y+w+1]
+    # spec_mean = np.mean(spec, axis =(1,2)) 
+    # print('SEPC',spec_mean[1200],spec_mean_1[1200])
+    
+    
+    hdu_spec = fits.PrimaryHDU(data=spec_mean, header=h_esp)
+    hdu_spec.writeto(pruebas + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+    
     return spec_mean
 
 # Function to update the plot with the clicked point
@@ -150,9 +190,11 @@ def update_plot(x,y):
     x = int(np.rint(x))
     y = int(np.rint(y))
     plt.scatter(x, y, color='red', marker='x', s=100)  # Customize the marker style
-    square = Rectangle((x - wide/2-0.5, y - wide/2-0.5), wide, wide, linewidth=1, edgecolor='r', facecolor='none')
-    ax.add_patch(square)
-    ax.text(x-w/2,y-w/1.2,'%.0f,%.0f'%(x,y), color = 'r',fontsize = 15)
+    # square = Rectangle((x - wide/2-0.5, y - wide/2-0.5), wide, wide, linewidth=1, edgecolor='r', facecolor='none')
+    circle = Circle((x, y),w, facecolor = 'none', edgecolor = 'r', linewidth=1)
+    # ax.add_patch(square)
+    ax.add_patch(circle)
+    ax.text(x-w,y-w-1,'%.0f,%.0f'%(x,y), color = 'r',fontsize = 15)
     plt.draw()  # Redraw the plot with the updated point
 
 
@@ -170,11 +212,11 @@ def plot_spec(flux):
     
     flux = flux[good]
     sig = np.nanstd(flux)    
-    ax2.set_ylim(np.nanmean(flux)-sig, np.nanmean(flux) + sig)
-    ax2.plot(lam,flux, label = '(x,y) = (%.0f,%.0f)'%(x,y))
+    # ax2.set_ylim(np.nanmean(flux)-sig, np.nanmean(flux) + sig)
+    ax2.plot(lam,flux, label = '(%.0f,%.0f)'%(x,y))
     ax2.set_xlabel('$\lambda (\mu m)$')
     ax2.set_ylabel('flux')
-    ax2.legend()
+    ax2.legend(fontsize=10)
     
 def bright(y,x):
     x = int(np.rint(x))
@@ -210,6 +252,7 @@ def onclick(event):
 cid = fig.canvas.mpl_connect('button_press_event',onclick)
 
 
+# %%
 
 
 
