@@ -70,10 +70,11 @@ and save them.
 2. ifu_combine.py. Uses the offsets parametres previously extracted for the 
 alingment of the whole cube (for a single IFU)
 
-3. Then you have to load the **mean cube** on Qfitsview and extract the spectra
-of the selected stars. You have to name each spectrum in this fashion:
-**star_<x_coordinate>_<y_coordinate>.fits**.
-
+3. spect_extract.py Extract the sky and the extracts the sky subtracted spectra
+Firsr, choose the *Sky* option in the console, then you have to selecte 
+5 areas free of stars. Then, you run the script again 
+selecting the *Sci* option and click on the stars. A fits file will be saved for 
+each spectrum
 4. spec_comp.py. Plot the spectra and generates a region file with the id of 
 each star and its SNR.
 
