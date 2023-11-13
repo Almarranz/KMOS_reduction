@@ -24,6 +24,10 @@ import regions
 from matplotlib.patches import Rectangle
 from matplotlib.patches import Circle
 import IPython
+import tkinter as tk
+from tkinter import simpledialog
+from astropy.stats import sigma_clip
+from numpy import mean
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -63,9 +67,10 @@ esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_grou
 log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
+
 # %%
-half_ifu = 1
-ifu_sel = 6
+half_ifu = 2
+ifu_sel = 7
 
 aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
 
@@ -123,12 +128,14 @@ h0 = ima[0].header
 h1 = ima[1].header
 
 # This is the header for the spectrum fits file
-h_esp = h1.copy()
-h_esp['CRVAL1'] = h_esp['CRVAL3']
-h_esp['CDELT1'] = h_esp['CDELT3']
-h_esp['CTYPE1'] = 'WAVE'
-h_esp['CUNIT1'] = 'um'
-del h_esp['CRVAL3'], h_esp['CRVAL2'], h_esp['CDELT2'], h_esp['CDELT3']
+# h_esp = h1.copy()
+model = '/Users/amartinez/Desktop/PhD/KMOS/practice/spec_header_model.fits'
+h_esp = fits.open(model)[0].header
+# h_esp['CRVAL1'] = h_esp['CRVAL3']
+# h_esp['CDELT1'] = h_esp['CDELT3']
+# h_esp['CTYPE1'] = 'WAVE'
+# h_esp['CUNIT1'] = 'um'
+# del h_esp['CRVAL3'], h_esp['CRVAL2'], h_esp['CDELT2'], h_esp['CDELT3']
 
 ima_1 = fits.open(esorex_ima_5)
 wcs = WCS(ima[1].header)
@@ -140,18 +147,23 @@ cube = ima[1].data
 # cube = cube[:,y_d:y_up, x_d:x_up]
 cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
 
+
+
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
-#Uncomment this for the WCS projection 
+ax.set_title('Continuum')
+#Uncomment these for the WCS projection 
+# =============================================================================
 # ax.axis("off")
 # ax = plt.subplot(projection=wcs,slices=(1000, 'y', 'x'))
-v_min =0.0005e-16
+# =============================================================================
+v_min =0.001e-16
 v_max = 0.05e-16
 
-cube_plot = np.nanmean(cube, axis = 0)
-# im = ax.imshow(cube_im, cmap='Greys', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
-im = ax.imshow(cube_plot, cmap='BrBG_r', 
-               label='overlays',origin='lower',vmin=v_min,vmax = v_max,alpha =1)
-# fig.colorbar(im, ax=ax, orientation='vertical')
+
+# im = ax.imshow(cube_im, cmap='inferno', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+cube_plot = np.nanmedian(cube, axis = 0)
+im = ax.imshow(cube_plot, cmap='inferno',label='overlays',origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+fig.colorbar(im, ax=ax, orientation='vertical')
 
 # x, y = 62,43
 # yy,xx = np.indices(cube_im.shape)
@@ -160,7 +172,6 @@ im = ax.imshow(cube_plot, cmap='BrBG_r',
 # values = cube[:,mask[0],mask[1]]
 # spec = np.mean(values, axis = 1)
 # ax.scatter(mask[1],mask[0],color = 'r')
-
 
 x = None
 y = None
@@ -174,16 +185,18 @@ def extract_spec(cube,y,x):
     spec = cube[:,mask[0],mask[1]]
     spec_mean = np.mean(spec, axis = 1)
     ax.scatter(mask[1],mask[0],color = 'r')
-
-    # spec = cube[:,x-w:x+w+1,y-w:y+w+1]
-    # spec_mean = np.mean(spec, axis =(1,2)) 
-    # print('SEPC',spec_mean[1200],spec_mean_1[1200])
     
-    
-    hdu_spec = fits.PrimaryHDU(data=spec_mean, header=h_esp)
-    hdu_spec.writeto(pruebas + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+    # For normalizing, uncommnet
+# =============================================================================
+#     norm =  np.where((lam > d_norm) & (lam < u_norm))
+#     filtered_data = sigma_clip(spec_mean[norm], sigma=1.5, maxiters=None,cenfunc='median', masked=False, copy=False)
+#     spec_mean = spec_mean/np.mean(filtered_data)
+# =============================================================================
     
     return spec_mean
+    
+    
+   
 
 # Function to update the plot with the clicked point
 def update_plot(x,y):
@@ -200,64 +213,108 @@ def update_plot(x,y):
 
 cab = ima[1].header
 lam = np.array([cab['CRVAL3']+cab['CDELT3']*i for i in range(cab['NAXIS3'])])
-d_spec = lam[0]
-u_spec = lam[-1]
-good = np.where((lam > d_spec) & (lam < u_spec))
-lam = lam[good]
+
 
 
 fig2, ax2 = plt.subplots(1,1,figsize =(20,10))
 
+HeI = 2.058
+COI =  2.29322
+COII = 2.32246
+Brg = 2.165
+He = 2.12
+HeII = 2.189
+# H2 = 2.12
+l_names = ['HeI', 'COI', 'COII','Br$\gamma$', 'He', 'HeII']
+lines = [HeI, COI, COII,Brg, He, HeII]
+for l in lines:
+    ax2.axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed')
+ax2b = ax2.twiny()
+ax2b.set_xticks(lines)
+tl = l_names
+ax2b.set_xticklabels(tl)
+d_norm, u_norm =  2.2,2.28
+norm =  np.where((lam > d_norm) & (lam < u_norm))
 def plot_spec(flux):
     
-    flux = flux[good]
-    sig = np.nanstd(flux)    
+    factor = 5e-18
     # ax2.set_ylim(np.nanmean(flux)-sig, np.nanmean(flux) + sig)
-    ax2.plot(lam,flux, label = '(%.0f,%.0f)'%(x,y))
+    ax2.plot(lam,flux+ clicks*factor, label = '(%.0f,%.0f)'%(x,y))
     ax2.set_xlabel('$\lambda (\mu m)$')
     ax2.set_ylabel('flux')
     ax2.legend(fontsize=10)
-    
-def bright(y,x):
-    x = int(np.rint(x))
-    y = int(np.rint(y))
-    around = cube_im[y-w:y+w,x-w:x+w]
-    bright_x, bright_y = np.unravel_index(around.argmax(), around.shape)
-    bright_flux = np.max(around)
-    x = x-(w-bright_y)
-    y = y-(w-bright_x)
-    print( bright_flux,  bright_x,bright_y)
-    print('max flus at:x = %s, y = %s'%(x-(w-bright_y),y-(w-bright_x)))
-    return x,y 
+    ax2b.plot(lam,flux + clicks*factor, alpha = 0)
+    print(f'Clicks = {clicks}')
 
+clicks = 0 
 def onclick(event):
-    global x, y  # Use global variables
+    global x, y, clicks  # Use global variables
     if event.xdata is not None and event.ydata is not None:
         x = event.xdata
         y = event.ydata 
         x = int(np.rint(x))
         y = int(np.rint(y))
-        x,y = bright(y,x)
         flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
         update_plot(x,y)
         plot_spec(flux)
-        
+        clicks += 1
         sig = np.nanstd(flux)/2
         print(f'Clicked at x={x}, y={y}')
-       
+        
+        return flux
+r_clicks = 0     
+no_lines = []   
+continuum = []
+def vertical(event):
+    global x2, y2, r_clicks, no_lines  # Use global variables
+    if event.dblclick and event.button ==1:
+        no_lines.append(event.xdata)
+        ax2.axvline(event.xdata, ls = 'dashed',color = 'r' )
+        if len(no_lines) == 2:
+            ind1 = np.where(abs(lam-no_lines[0])== min(abs(lam-no_lines[0])))
+            ind2 = np.where(abs(lam-no_lines[1])== min(abs(lam-no_lines[1])))
+            
+            ax2.axvline(lam[ind1], ls = 'dashed',color = 'green' )
+            ax2.axvline(lam[ind2], ls = 'dashed',color = 'green' )
+            # print(extract_spec)
+            print(int(np.rint(ind1)), int(np.rint(ind2)))
+            print(ind1,ind2[0])
+            print('flux[ind1:ind2+1]',lam[int(np.rint(ind1)):int(np.rint(ind2))+1])
+            continuum.append(lam[ind1[0][0]:ind2[0][0]+1])
+            
+            ax2.axvspan(lam[ind1][0], lam[ind2][0],color = 'green', alpha = 0.2)
+            # ax2.axvspan(no_lines[0], no_lines[1], color = 'r', alpha = 0.2)
+            no_lines = []
+    if event.dblclick and event.button ==3:
+            del continuum[-1]
+            del no_lines[-1]
+    # if event.xdata is not None and event.ydata is not None:
+    #     ax2.axvline(event.xdata)
+
+def save_continuum(event):
+    if event.key == 's':
+        cont = np.concatenate(continuum)
+        np.savetxt(pruebas + 'continuum_ifu%s_half%s.txt'%(ifu_sel,half_ifu), cont)
+        fig.canvas.mpl_disconnect(cid)
+        fig2.canvas.mpl_disconnect(cidv)
+        fig2.canvas.mpl_disconnect(save_continuum)
     
-
-
-
 cid = fig.canvas.mpl_connect('button_press_event',onclick)
-
+cidv = fig2.canvas.mpl_connect('button_press_event',vertical)
+cids = fig2.canvas.mpl_connect('key_press_event',save_continuum)
 
 # %%
+# fig, ax = plt.subplots()
+# ax.plot(np.random.rand(10))
 
+# def onclick(event):
+#     if event.dblclick and event.button ==3:
+#         print('yomamma')
+#     print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+#           ('double' if event.dblclick else 'single', event.button,
+#             event.x, event.y, event.xdata, event.ydata))
 
-
-    
-
+# cid = fig.canvas.mpl_connect('button_press_event', onclick)
 
 
 
