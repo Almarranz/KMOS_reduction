@@ -69,59 +69,68 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
 # %%
+ifu_sel = 'all'
+# ifu_sel = 7 
 half_ifu = 2
-ifu_sel = 7
 
 aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
 
 
-dic_x = {}
-dic_y = {}
-for ifu in range(1,24):
-    x_shifts = []
-    y_shifts = []
-    with open(log_5 + 'esorex.log', 'r') as f:
-        for line in f:
-            if 'IFU %s]'%(ifu) in line:
-                ind1 = line.find('in x:')
-                ind2 = line.find('in y:')
-                ind_x = ind1 + 6
-                ind_y = ind2 + 6
-                x_shifts.append(float(line[ind_x:ind_x+7]))
-                y_shifts.append(float(line[ind_y:ind_y+7]))
-                # print (line)
-                # break
-            else:
-                continue
-        x_shifts = np.array(x_shifts)
-        y_shifts = np.array(y_shifts)
-        if len(x_shifts)>0:
-            dic_x['ifu%s'%(ifu)] = np.asarray(np.rint(217 - x_shifts),int)
-            dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts),int)
-            # dic_x['ifu%s'%(ifu)] = np.asarray(np.rint(217 - x_shifts),int)
-            # dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts ),int)
-if half_ifu == 0:
-    y_d = int(min(dic_y['ifu%s'%(ifu_sel)])-27)
-    y_up = int(max(dic_y['ifu%s'%(ifu_sel)]))
-    x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
-    x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
-elif half_ifu == 1:
-    y_d = int(min(dic_y['ifu%s'%(ifu_sel)])-27)
-    y_up = np.unique(dic_y['ifu%s'%(ifu_sel)])[1]
-    x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
-    x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
-elif half_ifu == 2:   
-    y_d = np.unique(dic_y['ifu%s'%(ifu_sel)])[1]
-    y_up = np.unique(dic_y['ifu%s'%(ifu_sel)])[3]
-    x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
-    x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
+if type(ifu_sel) == int:
+    if os.path.isfile(pruebas  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
+        print('There is sky spectrum for this region. Go On!')
+    else:
+        print('There is no sky computed for ifu = %s, half = %s'%(ifu_sel,half_ifu))
+        sys.exit('DO IT!')
+    dic_x = {}
+    dic_y = {}
+    for ifu in range(1,24):
+        x_shifts = []
+        y_shifts = []
+        with open(log_5 + 'esorex.log', 'r') as f:
+            for line in f:
+                if 'IFU %s]'%(ifu) in line:
+                    ind1 = line.find('in x:')
+                    ind2 = line.find('in y:')
+                    ind_x = ind1 + 6
+                    ind_y = ind2 + 6
+                    x_shifts.append(float(line[ind_x:ind_x+7]))
+                    y_shifts.append(float(line[ind_y:ind_y+7]))
+                    # print (line)
+                    # break
+                else:
+                    continue
+            x_shifts = np.array(x_shifts)
+            y_shifts = np.array(y_shifts)
+            if len(x_shifts)>0:
+                dic_x['ifu%s'%(ifu)] = np.asarray(np.rint(217 - x_shifts),int)
+                dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts),int)
+                # dic_x['ifu%s'%(ifu)] = np.asarray(np.rint(217 - x_shifts),int)
+                # dic_y['ifu%s'%(ifu)] = np.asarray(np.rint(433 + y_shifts ),int)
+    if half_ifu == 0:
+        y_d = int(min(dic_y['ifu%s'%(ifu_sel)])-27)
+        y_up = int(max(dic_y['ifu%s'%(ifu_sel)]))
+        x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
+        x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
+    elif half_ifu == 1:
+        y_d = int(min(dic_y['ifu%s'%(ifu_sel)])-27)
+        y_up = np.unique(dic_y['ifu%s'%(ifu_sel)])[1]
+        x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
+        x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
+    elif half_ifu == 2:   
+        y_d = np.unique(dic_y['ifu%s'%(ifu_sel)])[1]
+        y_up = np.unique(dic_y['ifu%s'%(ifu_sel)])[3]
+        x_d = int(min(dic_x['ifu%s'%(ifu_sel)]))
+        x_up = int(max(dic_x['ifu%s'%(ifu_sel)])+27)
 
 # %%
 
 # ima = fits.open(esorex_cube_5)
 
-
-ima = fits.open(aligned_cube)
+if ifu_sel == 'all':
+    ima = fits.open(esorex_cube_5)
+else:
+    ima = fits.open(aligned_cube)
 mapa = WCS(ima[1].header).celestial
 
 h0 = ima[0].header
@@ -145,7 +154,10 @@ h1_1 = ima_1[1].header
 cube = ima[1].data
 
 # cube = cube[:,y_d:y_up, x_d:x_up]
-cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
+if ifu_sel == 'all':
+    cube_im = ima_1[1].data
+else:
+    cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
 
 
 
@@ -156,15 +168,20 @@ ax.set_title('Continuum')
 # ax.axis("off")
 # ax = plt.subplot(projection=wcs,slices=(1000, 'y', 'x'))
 # =============================================================================
-v_min =0.001e-16
-v_max = 0.05e-16
 
 
-# im = ax.imshow(cube_im, cmap='inferno', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
-cube_plot = np.nanmedian(cube, axis = 0)
-im = ax.imshow(cube_plot, cmap='inferno',label='overlays',origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+
+if ifu_sel == 'all':
+    v_min =0.01e-16
+    v_max = 0.1e-16
+    im = ax.imshow(cube_im, cmap='inferno', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
+else:
+    v_min =0.001e-16
+    v_max = 0.05e-16
+    cube_plot = np.nanmedian(cube, axis = 0)
+    im = ax.imshow(cube_plot, cmap='inferno',label='overlays',origin='lower',vmin=v_min,vmax = v_max,alpha =1)
 fig.colorbar(im, ax=ax, orientation='vertical')
-
+# sys.exit(173)
 # x, y = 62,43
 # yy,xx = np.indices(cube_im.shape)
 # distances = np.sqrt((xx - x)**2 + (yy - y)**2)
@@ -184,6 +201,10 @@ def extract_spec(cube,y,x):
     mask = np.where(distances <=w)
     spec = cube[:,mask[0],mask[1]]
     spec_mean = np.mean(spec, axis = 1)
+    # This subtract the sky that I don not know if it is correct
+    # hdu_sky = fits.open(pruebas  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))
+    # sky_data = hdu_sky[0].data
+    # spec_mean = spec_mean - sky_data
     ax.scatter(mask[1],mask[0],color = 'r')
     
     # For normalizing, uncommnet
@@ -249,7 +270,7 @@ def plot_spec(flux):
 clicks = 0 
 def onclick(event):
     global x, y, clicks  # Use global variables
-    if event.xdata is not None and event.ydata is not None:
+    if event.xdata is not None and event.ydata is not None and event.dblclick:
         x = event.xdata
         y = event.ydata 
         x = int(np.rint(x))
@@ -262,11 +283,13 @@ def onclick(event):
         print(f'Clicked at x={x}, y={y}')
         
         return flux
-r_clicks = 0     
+chunk = 0     
 no_lines = []   
 continuum = []
+continuum_inds = []
+chunk_ind = []
 def vertical(event):
-    global x2, y2, r_clicks, no_lines  # Use global variables
+    global x2, y2, chunk, no_lines  # Use global variables
     if event.dblclick and event.button ==1:
         no_lines.append(event.xdata)
         ax2.axvline(event.xdata, ls = 'dashed',color = 'r' )
@@ -277,27 +300,36 @@ def vertical(event):
             ax2.axvline(lam[ind1], ls = 'dashed',color = 'green' )
             ax2.axvline(lam[ind2], ls = 'dashed',color = 'green' )
             # print(extract_spec)
-            print(int(np.rint(ind1)), int(np.rint(ind2)))
-            print(ind1,ind2[0])
-            print('flux[ind1:ind2+1]',lam[int(np.rint(ind1)):int(np.rint(ind2))+1])
             continuum.append(lam[ind1[0][0]:ind2[0][0]+1])
-            
+            continuum_inds.append(np.arange(ind1[0][0], ind2[0][0]+1,1))
+            chunk_ind.append(np.full((ind2[0][0]+1-ind1[0][0]),chunk))
             ax2.axvspan(lam[ind1][0], lam[ind2][0],color = 'green', alpha = 0.2)
             # ax2.axvspan(no_lines[0], no_lines[1], color = 'r', alpha = 0.2)
             no_lines = []
+            chunk +=1
+            print('chunk_ind', chunk_ind)
     if event.dblclick and event.button ==3:
             del continuum[-1]
-            del no_lines[-1]
+            del continuum_inds[-1]
+            del chunk_ind[-1]
+            no_lines = []
     # if event.xdata is not None and event.ydata is not None:
     #     ax2.axvline(event.xdata)
 
 def save_continuum(event):
     if event.key == 's':
         cont = np.concatenate(continuum)
-        np.savetxt(pruebas + 'continuum_ifu%s_half%s.txt'%(ifu_sel,half_ifu), cont)
+        cont_id = np.concatenate(continuum_inds)
+        chunk_id = np.concatenate(chunk_ind)
+        if ifu_sel == 'all':
+            np.savetxt(pruebas + 'continuum_all.txt', np.c_[cont,cont_id,chunk_id], fmt = '%.8f %.0f %.0f')
+        else:            
+            np.savetxt(pruebas + 'continuum_ifu%s_half%s.txt'%(ifu_sel,half_ifu), np.c_[cont,cont_id,chunk_id], fmt = '%.8f %.0f %.0f')
         fig.canvas.mpl_disconnect(cid)
         fig2.canvas.mpl_disconnect(cidv)
         fig2.canvas.mpl_disconnect(save_continuum)
+        plt.close()
+        # plt.close()
     
 cid = fig.canvas.mpl_connect('button_press_event',onclick)
 cidv = fig2.canvas.mpl_connect('button_press_event',vertical)
