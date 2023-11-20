@@ -5,7 +5,7 @@ Created on Tue Nov  7 09:57:30 2023
 @author: amartinez
 """
 
-# We are going to make a continuum map 
+# Extract the sky and the stars sky-subtracted
 import os
 import numpy as np
 import sys
@@ -26,6 +26,7 @@ from matplotlib.patches import Circle
 import IPython
 import tkinter as tk
 from tkinter import simpledialog
+import shutil
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -68,10 +69,19 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 # %%
 half_ifu = 2
-ifu_sel = 7
-
+ifu_sel =12
+spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
 
+delete_spec = 'no'#!!!
+
+if delete_spec == 'yes':
+    del_ques = input('Do you really want to delete files form ifu%s half%s?'%(ifu_sel, half_ifu))
+    if del_ques == 'yes':
+        shutil.rmtree(spec_folder + '/' )
+        os.mkdir(spec_folder)
+    elif del_ques == 'no':
+        sys.exit(84)
 
 dic_x = {}
 dic_y = {}
@@ -146,23 +156,23 @@ cube = ima[1].data
 cube_im = ima_1[1].data[y_d:y_up, x_d:x_up]
 
 sky_cal = input('Choose: Sci or Sky?')#TODO
-# sky_cal = 'Sci' #TODO
+# sky_cal = 'Sky' #TODO
 if sky_cal == 'Sci':
-    if os.path.isfile(pruebas  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
-        print('There is!')
+    if os.path.isfile(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
+        print('There is difuse emission sprectrum!')
     else:
         print('There is no sky compted for ifu = %s, half = %s'%(ifu_sel,half_ifu))
         sys.exit('DO IT!')
 
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
-ax.set_title(sky_cal)
+ax.set_title('%s, IFU %s, Half %s '%(sky_cal, ifu_sel, half_ifu))
 #Uncomment these for the WCS projection 
 # =============================================================================
 # ax.axis("off")
 # ax = plt.subplot(projection=wcs,slices=(1000, 'y', 'x'))
 # =============================================================================
-v_min =0.001e-16
-v_max = 0.05e-16
+v_min =0.01e-18
+v_max = 0.01e-16
 
 
 # im = ax.imshow(cube_im, cmap='inferno', origin='lower',vmin=v_min,vmax = v_max,alpha =1)
@@ -178,7 +188,6 @@ fig.colorbar(im, ax=ax, orientation='vertical')
 # spec = np.mean(values, axis = 1)
 # ax.scatter(mask[1],mask[0],color = 'r')
 
-
 x = None
 y = None
 wide = 4#TODO
@@ -192,14 +201,14 @@ def extract_spec(cube,y,x):
     spec_mean = np.mean(spec, axis = 1)
     ax.scatter(mask[1],mask[0],color = 'r')
     if sky_cal == 'Sci':
-        hdu_sky = fits.open(pruebas  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))
+        hdu_sky = fits.open(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))
         sky_data = hdu_sky[0].data
         spec_mean_sky = spec_mean - sky_data
         # spec = cube[:,x-w:x+w+1,y-w:y+w+1]
         # spec_mean = np.mean(spec, axis =(1,2)) 
         # print('SEPC',spec_mean[1200],spec_mean_1[1200]) 
         hdu_spec = fits.PrimaryHDU(data=spec_mean_sky, header=h_esp)
-        hdu_spec.writeto(pruebas + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+        hdu_spec.writeto(spec_folder + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
     
         return spec_mean_sky
     
@@ -314,16 +323,29 @@ def onclick_sky(event):
             if clicks == 5:
                 sky_mean = np.mean(np_spec,axis = 0)
                 hdu_sky = fits.PrimaryHDU(data=sky_mean, header=h_esp)
-                hdu_sky.writeto(pruebas + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu), overwrite= True)
+                hdu_sky.writeto(spec_folder + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu), overwrite= True)
                 print('Saved mean sky')
+                plt.close()
+                plt.close()
                 # sys.exit(293)
 
-
+def delete(event):
+    if event.key == 'd':
+        ax2.cla()  
+        ax2b.cla()
+        for l in lines:
+            ax2.axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed')
+        ax2.set_xticks(lines)
+        tl = l_names
+        ax2.set_xticklabels(tl)   
+    
+    
+    
 if sky_cal == 'Sci':
     cid = fig.canvas.mpl_connect('button_press_event',onclick)
 if sky_cal == 'Sky':
     cid = fig.canvas.mpl_connect('button_press_event',onclick_sky)
-
+cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
 
 # %%
 # import matplotlib.pyplot as plt
