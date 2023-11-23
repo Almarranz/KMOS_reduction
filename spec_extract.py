@@ -228,8 +228,13 @@ w = int(wide/2)
 
 w1 = 2
 w2 = 2
-rand_anillos = []
+
+coor = []
 def extract_spec(cube,y,x):
+    global temp
+    coor.append([y,x])
+    if len(coor)>1 and coor[-2] == coor[-1]:
+        temp.remove()
     # yy,xx = np.indices(cube_im.shape)
     xx,yy = np.indices(cube_plot.shape)
     distances = np.sqrt((xx - x)**2 + (yy - y)**2)
@@ -241,15 +246,16 @@ def extract_spec(cube,y,x):
     mask_around = np.where((distances>w+w1)&(distances<w+w1+w2))
     r_ind = np.random.choice(len(mask_around[0]), size=30, replace=False)
     mask_rand = tuple(array[r_ind] for array in mask_around)
-    rand_anillos.append(mask_rand)
+    # rand_anillos.append(mask_rand)
     # ring = cube[:,mask_around[0],mask_around[1]]
     ring = cube[:, mask_rand[0], mask_rand[1]]
     print('mask_around',mask_around[0])
     print('mask_around',mask_around[1])
     ring_mean = np.mean(ring, axis =1)
     # ax.scatter(mask_around[1],mask_around[0], color = 'orange', s = 50)
-    # ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
-    ax.scatter(rand_anillos[-1][1],rand_anillos[-1][0], color = 'red', s = 20)
+    temp = ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
+    # temp =ax.scatter(rand_anillos[-1][1],rand_anillos[-1][0], color = 'red', s = 20)
+    
     plt.draw()
     # ax2.plot(lam,ring_mean, color = 'fuchsia')
     
@@ -311,6 +317,12 @@ d_spec = lam[0]
 u_spec = lam[-1]
 good = np.where((lam >= d_spec) & (lam <= u_spec))
 lam = lam[good]
+
+def onkey(event):
+    if event.key == 'd':
+        if rand_anillos:
+            rand_anillos.pop()  # Remove the last clicked point
+            update_plot()
 
 
 fig2, ax2 = plt.subplots(1,1,figsize =(20,10))
@@ -423,12 +435,6 @@ def onclick_sky(event):
             print(f'Clicked at x={x}, y={y}, clicks = {clicks}')
             # print(dic_spec)
            
-                # sys.exit(293)
-def delete_1(event):
-    if event.key == 'd':
-        if rand_anillos:
-            rand_anillos.pop()  # Remove the last clicked point
-            update_plot()
         
     
 def delete(event):
@@ -486,28 +492,28 @@ def delete(event):
     
 if sky_cal == 'Sci':
     cid = fig.canvas.mpl_connect('button_press_event',onclick)
-    cid_a = fig.canvas.mpl_connect('key_press_event', delete_1)
+    cid_a = fig.canvas.mpl_connect('key_press_event', onkey)
 if sky_cal == 'Sky':
     cid = fig.canvas.mpl_connect('button_press_event',onclick_sky)
 cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
 
 
 # %%
-import numpy as np
+# import numpy as np
 
-# Your original tuple of arrays
-array_tuple = (np.arange(1,61), np.arange(10,610,10))
+# # Your original tuple of arrays
+# array_tuple = (np.arange(1,61), np.arange(10,610,10))
 
-# Set a random seed for reproducibility
-np.random.seed(42)
+# # Set a random seed for reproducibility
+# np.random.seed(42)
 
-# Randomly select 10 indices
-selected_indices = np.random.choice(len(array_tuple[0]), size=10, replace=False)
+# # Randomly select 10 indices
+# selected_indices = np.random.choice(len(array_tuple[0]), size=10, replace=False)
 
-# Use the selected indices to extract elements from each array in the tuple
-selected_elements = tuple(array[selected_indices] for array in array_tuple)
+# # Use the selected indices to extract elements from each array in the tuple
+# selected_elements = tuple(array[selected_indices] for array in array_tuple)
 
-print(selected_elements)
+# print(selected_elements)
 # %%
 # import matplotlib.pyplot as plt
 # from matplotlib.widgets import Slider
