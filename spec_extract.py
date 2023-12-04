@@ -70,7 +70,7 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 # %%
 half_ifu = 2
-ifu_sel = 7
+ifu_sel = 23
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
@@ -156,8 +156,8 @@ cube = ima[1].data
 
 # cube = cube[:,y_d:y_up, x_d:x_up]
 
-# sky_cal = input('Choose: Sci or Sky?')#TODO
-sky_cal = 'Sci' #TODO
+sky_cal = input('Choose: Sci or Sky?')#TODO
+# sky_cal = 'Sky' #TODO
 if sky_cal == 'Sci':
     if os.path.isfile(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
         difuse_flux = fits.open(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))[0].data
@@ -204,7 +204,6 @@ vmax_slider.on_changed(update)
 
 plt.draw()
 
-
 # x, y = 62,43
 # yy,xx = np.indices(cube_im.shape)
 # distances = np.sqrt((xx - x)**2 + (yy - y)**2)
@@ -215,8 +214,8 @@ plt.draw()
 
 x = None
 y = None
-wide = 4#TODO
-w = int(wide/2)
+wide = 5.3#!!!! This is the FWHM of the standard star in the KMOS pipeline 
+w = int(np.rint(wide/2))
 
 # event2 = 0
 # def w_around(event):
@@ -229,8 +228,33 @@ w = int(wide/2)
 w1 = 2
 w2 = 2
 
+cab = ima[1].header
+lam = np.array([cab['CRVAL3']+cab['CDELT3']*i for i in range(cab['NAXIS3'])])
+d_spec = lam[0]
+u_spec = lam[-1]
+good = np.where((lam >= d_spec) & (lam <= u_spec))
+lam = lam[good]
+
+colorin = '#ff7f0e'     
+def ring_select(event2):
+    global colorin
+    if  event2.key == 'left':
+        colorin = 'red'
+        print(event2.key)
+    elif event2.key == 'right':
+        colorin = 'blue'
+    elif event2.key == 'up':
+        colorin = 'green'
+    elif event2.key == 'down':
+        colorin = 'grey'
+    elif event2.key == 'n':
+        colorin = '#ff7f0e'    
+    elif event2.key == 'r':
+        colorin = 'fuchsia'
+    return colorin
+
 coor = []
-def extract_spec(cube,y,x):
+def extract_spec(cube,y,x, event2): # Use the arrows to select the ring of sky around the object to subtract
     global temp
     coor.append([y,x])
     if len(coor)>1 and coor[-2] == coor[-1]:
@@ -238,25 +262,56 @@ def extract_spec(cube,y,x):
     # yy,xx = np.indices(cube_im.shape)
     xx,yy = np.indices(cube_plot.shape)
     distances = np.sqrt((xx - x)**2 + (yy - y)**2)
-    mask = np.where(distances <=w)
+    mask = np.where(distances <=w)    
     spec = cube[:,mask[0],mask[1]]
     spec_mean = np.mean(spec, axis = 1)
     ax.scatter(mask[1],mask[0],color = 'lime',s = 50)
     
-    mask_around = np.where((distances>w+w1)&(distances<w+w1+w2))
-    r_ind = np.random.choice(len(mask_around[0]), size=30, replace=False)
-    mask_rand = tuple(array[r_ind] for array in mask_around)
-    # rand_anillos.append(mask_rand)
-    # ring = cube[:,mask_around[0],mask_around[1]]
-    ring = cube[:, mask_rand[0], mask_rand[1]]
-    print('mask_around',mask_around[0])
-    print('mask_around',mask_around[1])
-    ring_mean = np.mean(ring, axis =1)
-    # ax.scatter(mask_around[1],mask_around[0], color = 'orange', s = 50)
-    temp = ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
-    # temp =ax.scatter(rand_anillos[-1][1],rand_anillos[-1][0], color = 'red', s = 20)
+    mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
     
+    m_y = np.rint((min(mask_around[0]) + max(mask_around[0]))/2)
+    m_x = np.rint((min(mask_around[1]) + max(mask_around[1]))/2)
+    down = np.where(mask_around[0]<m_y)
+    up = np.where(mask_around[0]>m_y)
+    left = np.where(mask_around[1]<m_x)
+    right = np.where(mask_around[1]>m_x)
+    circle = np.where(mask_around[1])
+    m = tuple(array[circle] for array in mask_around)
+    colorin = ring_select(event2)
+    if colorin == 'red':
+        m = tuple(array[left] for array in mask_around)
+    if colorin == 'blue':
+        m = tuple(array[right] for array in mask_around)
+    if colorin == 'green':
+        m = tuple(array[up] for array in mask_around)
+    if colorin == 'grey':
+        m = tuple(array[down] for array in mask_around)
+    if colorin == '#ff7f0e':
+        m = tuple(array[circle] for array in mask_around)
+    
+    mask_rand = m
+    if colorin == 'fuchsia':
+        r_ind = np.random.choice(len(m[0]), size=int(len(m[0])/2), replace=False)
+        mask_rand = tuple(array[r_ind] for array in mask_around)
+    
+    ring = cube[:, mask_rand[0], mask_rand[1]]
+    ring_mean = np.mean(ring, axis =1)
+    
+    # temp = ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
+    temp = ax.scatter(mask_rand[1],mask_rand[0], color = colorin, s = 20)
+    ax2.plot(lam, ring_mean, color = 'k', alpha = 0.2)
     plt.draw()
+    
+    # r_ind = np.random.choice(len(mask_around[0]), size=30, replace=False)
+    # mask_rand = tuple(array[r_ind] for array in mask_around)
+    # ring = cube[:, mask_rand[0], mask_rand[1]]
+    # ring_mean = np.mean(ring, axis =1)
+    # colorin = ring_select(event2)
+    # print(colorin)
+    # # temp = ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
+    # temp = ax.scatter(mask_rand[1],mask_rand[0], color = colorin, s = 20)
+    # ax2.plot(lam, ring_mean, color = 'k', alpha = 1)
+    # plt.draw()
     # ax2.plot(lam,ring_mean, color = 'fuchsia')
     
     if sky_cal == 'Sci':
@@ -264,38 +319,18 @@ def extract_spec(cube,y,x):
         # sky_data = hdu_sky[0].data
         # spec_mean_sky = spec_mean - sky_data
         
-        # h_esp = fits.open(model)[0].header
-        # hdu_spec = fits.PrimaryHDU(data=spec_mean_sky, header=h_esp)
-        # hdu_spec.writeto(spec_folder + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+        
         spec_mean_sky = spec_mean-ring_mean
+        h_esp = fits.open(model)[0].header
+        hdu_spec = fits.PrimaryHDU(data=spec_mean_sky, header=h_esp)
+        hdu_spec.writeto(spec_folder + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+        
         # return spec_mean_sky
-        return spec_mean
+        return spec_mean, spec_mean_sky # Return two spectra, the one on the aberture and the one minus the ring arund it
     
     
     else:
         return spec_mean
-    
-# rand_anillos = []
-# def anillos():
-#     xx,yy = np.indices(cube_plot.shape)
-#     distances = np.sqrt((xx - x)**2 + (yy - y)**2)
-    
-#     mask_around = np.where((distances>w+w1)&(distances<w+w1+w2))
-#     r_ind = np.random.choice(len(mask_around[0]), size=30, replace=False)
-#     mask_rand = tuple(array[r_ind] for array in mask_around)
-#     rand_anillos.append(mask_rand)
-#     # ring = cube[:,mask_around[0],mask_around[1]]
-#     ring = cube[:, mask_rand[0], mask_rand[1]]
-#     print('mask_around',mask_around[0])
-#     print('mask_around',mask_around[1])
-#     ring_mean = np.mean(ring, axis =1)
-#     # ax.scatter(mask_around[1],mask_around[0], color = 'orange', s = 50)
-#     ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
-#     for anillos in rand_anillos:
-#         ax.scatter(anillos[1],anillos[0], color = 'green', s = 20)
-        
-#     plt.draw() 
-
 
 
 # Function to update the plot with the clicked point
@@ -311,18 +346,7 @@ def update_plot(x,y):
      # Redraw the plot with the updated point
 
 
-cab = ima[1].header
-lam = np.array([cab['CRVAL3']+cab['CDELT3']*i for i in range(cab['NAXIS3'])])
-d_spec = lam[0]
-u_spec = lam[-1]
-good = np.where((lam >= d_spec) & (lam <= u_spec))
-lam = lam[good]
 
-def onkey(event):
-    if event.key == 'd':
-        if rand_anillos:
-            rand_anillos.pop()  # Remove the last clicked point
-            update_plot()
 
 
 fig2, ax2 = plt.subplots(1,1,figsize =(20,10))
@@ -375,7 +399,7 @@ def plot_spec(flux):
     ax2.legend(fontsize=10)
     
     
-    ax2b.plot(lam,flux, alpha = 0)
+    ax2b.plot(lam,flux, alpha = 0)# I need this for something related with the second axis plot, dont remember why
     
     
 def bright(y,x):
@@ -407,9 +431,10 @@ def onclick(event):
         y = int(np.rint(y))
         x,y = bright(y,x)
         # flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
-        flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
+        flux,flux_ = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event)
         update_plot(x,y)
-        plot_spec(flux)
+        # plot_spec(flux)
+        plot_spec(flux_)
         
         # sig = np.nanstd(flux)/2
         print(f'Clicked at x={x}, y={y}')
@@ -427,7 +452,7 @@ def onclick_sky(event):
             x = int(np.rint(x))
             y = int(np.rint(y))
             x,y = bright(y,x)
-            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
+            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event)
             update_plot(x,y)
             plot_spec(flux)            
             # sig = np.nanstd(flux)/2
@@ -448,11 +473,11 @@ def delete(event):
             ax2.set_xticks(lines)
             tl = l_names
             ax2.set_xticklabels(tl)   
-            ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
-            ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
-            sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
-            ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
-                        np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
+        #     ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
+        #     ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
+        #     sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
+        #     ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
+        #                 np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
         if event.key == 'y':
             flux_young = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
             h_esp = fits.open(model)[0].header
@@ -465,7 +490,7 @@ def delete(event):
     if sky_cal == 'Sky':
         
         if event.key == 'g':
-            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
+            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event)
             print(f'Saved at x={x}, y={y}, clicks = {clicks}')
             np_spec.append(flux)
             print('Saved %s arrays'%(len(np_spec)))
@@ -480,6 +505,8 @@ def delete(event):
             if len(np_spec)>=1:
                 del np_spec[-1]
         if len(np_spec)== 5:
+            h_esp = fits.open(model)[0].header
+
             np_spec = np.array(np_spec)
             sky_mean = np.mean(np_spec,axis = 0)
             hdu_sky = fits.PrimaryHDU(data=sky_mean, header=h_esp)
@@ -492,7 +519,7 @@ def delete(event):
     
 if sky_cal == 'Sci':
     cid = fig.canvas.mpl_connect('button_press_event',onclick)
-    cid_a = fig.canvas.mpl_connect('key_press_event', onkey)
+    cid_ring = fig.canvas.mpl_connect('key_press_event', ring_select)
 if sky_cal == 'Sky':
     cid = fig.canvas.mpl_connect('button_press_event',onclick_sky)
 cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
@@ -517,20 +544,48 @@ cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
 # %%
 # import matplotlib.pyplot as plt
 # from matplotlib.widgets import Slider
-# data = np.random.rand(10, 10)
+# data = np.random.rand(50, 100)
 
 
-# def w_around(event2):
-#     if event2.key.isdigit():
-#         print('You pushed',event2.key.isdigit())
-#         print(int(event2.key)*5)
 # # Create a figure and axis
 # figA, ax = plt.subplots()
 # plt.subplots_adjust(bottom=0.25)  # Adjust the bottom to make room for the slider
 
+# x0,y0 = 25  ,50
+# a, b = 0,10
+# def test(event3):
+#     print(event3.key)
+#     if event3.key =='up':
+#         print('yomamma')
+# cid_ring = figA.canvas.mpl_connect('key_press_event', test)
+
+# xx,yy = np.indices(data.shape)
+# distances = np.sqrt((xx-x0)**2 + (yy-y0)**2)
+# mask = np.where((distances >=10)&(distances<12))
+# m_y = np.rint((min(mask[0]) + max(mask[0]))/2)
+# m_x = np.rint((min(mask[1]) + max(mask[1]))/2)
+# down = np.where(mask[0]>m_y)
+# up = np.where(mask[0]<m_y)
+# left = np.where(mask[1]<m_x)
+# right = np.where(mask[1]>m_x)
+# circle = np.where(mask[1])
+# # ax.scatter(mask[1][a:b],mask[0][a:b],color = 'red',s = 50)
+# # a = down
+# # a = up
+# # a = left
+# a = right
+# # a = circle
+# m1 = mask[1][a]
+# m2 = mask[0][a]
+# # mask_rand = tuple(array[r_ind] for array in mask_around)
+# m = tuple(array[a] for array in mask)
+# # ax.scatter(mask[1][a],mask[0][a],color = 'red',s = 50)
+# ax.scatter(m[1],m[0],color = 'red',s = 50)
+# ax.scatter(x0,y0, color = 'k',s= 200)
+
 # # Create an initial image
 # image = ax.imshow(data, cmap='viridis')
-# cid_A = figA.canvas.mpl_connect('key_press_event',w_around)
+# # cid_A = figA.canvas.mpl_connect('key_press_event',w_around)
 
 # %%
 
