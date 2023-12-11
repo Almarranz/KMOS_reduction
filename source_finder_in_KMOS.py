@@ -65,18 +65,22 @@ rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 
 # Enable automatic plotting mode
-IPython.get_ipython().run_line_magic('matplotlib', 'auto')
-# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+# IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 # %%
 
-ifu_sel =6#!!!
+ifu_sel =19#!!!
 half_ifu =2#!!!
+max_d = 5#!!!
+min_d = 2#!!!
+search_r = 0.0015#!!!
+
 reduction = 'ABC'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 choped_ifus = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_ABC/'
 gns_ls = '/Users/amartinez/Desktop/PhD/KMOS/GNS_lists/'
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
-
+spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 # sources = 'auto'#!!!
 sources = 'hand'#!!!
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
@@ -138,34 +142,33 @@ if sources =='auto':
 if sources == 'hand':
     x = []
     y = []
+    x_y = []
+    y_y = []
     for i in range(len((glob.glob(spec_folder +'/spec*')))):
         name = os.path.basename(glob.glob(spec_folder +'/spec*')[i])
+        # print(name)
         coord = re.findall(r'\d+', name)
         x0,y0 = np.array(coord[2]).astype(int), np.array(coord[3]).astype(int)
         x.append(y0)
         y.append(x0)
         print(x0,y0)
-        # xx,yy = np.indices(cube_plot.shape)
-        # distances = np.sqrt((xx - x)**2 + (yy - y)**2)
-        # mask = np.where(distances <=w)    
-        # spec = cube[:,mask[0],mask[1]]
-        # spec_mean = np.mean(spec, axis = 1)
-        # print(spec_mean.shape, np.nanmean(spec_mean))
-        
-        
-        # mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
-        # circle = np.where(mask_around[1])
-        # m = tuple(array[circle] for array in mask_around)
-        # mask_rand = m
-        # ring = cube[:, mask_rand[0], mask_rand[1]]
-        # ring_mean = np.mean(ring, axis =1)
-        # spec_mean_sky = spec_mean-ring_mean
-        # print(np.nanmean(spec_mean_sky))
-        
+    for j in range(len((glob.glob(spec_young +'/spec*')))):
+        name_y = os.path.basename(glob.glob(spec_young +'/spec*')[j])
+        coord_y = re.findall(r'\d+', name_y)
+        x0_y,y0_y = np.array(coord_y[2]).astype(int), np.array(coord_y[3]).astype(int)
+        print('------')
+        print(y0_y,x0_y)
+        x_y.append(x0_y)
+        y_y.append(y0_y)
+        # print(name_y)
+    
         
     x = np.array(x)
     y = np.array(y)
+    x_y = np.array(x_y)
+    y_y = np.array(y_y)
     ax.scatter(x,y, s = 100, color ='lime', marker = 'x')
+    ax.scatter(x_y,y_y, s = 100, color ='lime', marker = 'o')
    
 plt.draw()
 
@@ -182,7 +185,7 @@ np.savetxt(pruebas + 'middle_test.txt',np.array([radec_m[0],radec_m[1]]), fmt = 
 # gns = np.loadtxt(gns_ls + 'GNS_LIB_overKMOS_dmu5.txt')
 # gns = np.loadtxt('/Users/amartinez/Desktop/PhD/Libralato_data/results/sec_All_match_GNS_and_WFC3IR_refined_galactic.txt')
 gns = np.loadtxt('/Users/amartinez/Desktop/PhD/Libralato_data/results/relaxed_match_GNS_and_WFC3IR_refined_galactic.txt')
-search_r = 0.0015
+
 selec = np.where(np.sqrt((gns[:,0]-radec_m[0])**2 +(gns[:,1]-radec_m[1])**2)<search_r)
 
 
@@ -193,6 +196,7 @@ coor = np.array([gns_[:,0],gns_[:,1]]).T
 np.savetxt(pruebas + 'around_ifu%s_half%s.txt'%(ifu_sel, half_ifu),coor)
 xy = np.array([x,y]).T
 
+
 coor_pix = wcs.wcs_world2pix(coor[:,0],coor[:,1],0)
 gns_= np.c_[gns_,coor_pix[0],coor_pix[1]]
 fig, ax = plt.subplots(1,1)
@@ -202,8 +206,7 @@ ax.scatter(xy[:,0],xy[:,1],color = 'k', label = 'KMOS')
 
 coor_pix = np.array([coor_pix[0],coor_pix[1]]).T
 # %%
-max_d = 4#!!!
-min_d = 0#!!!
+
 dist_mat=distance.cdist(coor_pix[:],xy[:], 'euclidean')
 
 # close = np.where(dist_mat<max_d)[0]
@@ -218,6 +221,8 @@ xy_close = xy[close_xy]
 xy_close = xy_close[np.unique(xy_close,axis=0, return_index = True)[1]]
 ax.scatter(coor_pix_close[:,0],coor_pix_close[:,1],s=200, color = 'g',alpha = 0.2)
 ax.scatter(xy_close[:,0],xy_close[:,1],s=200, color = 'b',alpha = 0.2)
+ax.set_xlabel('x pix')
+ax.set_ylabel('y pix')
 ax.legend()
 # coor_pix_close = np.array(coor_pix_close, dtype="<f4")
 # xy_close= np.array(xy_close, dtype="<f4")
@@ -247,86 +252,52 @@ ax.scatter(xy[:,0],xy[:,1], color = 'k', label = 'KMOS')
 ax.scatter(target_list[:,0], target_list[:,1], color = 'lime', s= 300, alpha = 0.5, label ='KMOS in GNS',zorder = 0)
 ax.legend()
 # %%
+xy_y = np.array([x_y,y_y]).T
 distancia = 2
-x1 =   [1.2,  2,  3, 3, 1.35, 1.2, 4,    2,1]
-y1 =   [  1, 13,  3, 1,   1,    1, 4, 13.1,1]
-# x1 =   [1,  2,  30, 3, 1.2,  3, 4,  2, 1.5]
-# y1 =   [1, 13,  30, 1,    1, 1, 4, 13, 1]
 
-x2 =   [1.6 , 4, 1.3,  3, 2]
-y2 =   [1   , 4,   1,   13, 13]
+lc1, lc2, l1 , l2 = compare_lists(coor_pix_t, xy,0,1,0,1,distancia)
+lc1_y, lc2_y, l1_y, l2_y = compare_lists(coor_pix_t, xy_y, 0,1,0,1,distancia)
 
+ax.scatter(lc2[:,0],lc2[:,1], 
+            s= 300, marker = '^',alpha = 0.2, color = 'b', label ='Compare lsts\nmax_dis = %spix'%(distancia))    
+ax.scatter(lc1[:,0],lc1[:,1], 
+            s= 300, marker = '<',alpha = 0.2, color = 'b') 
+# ax.scatter(lc1_y[:,0],lc1_y[:,1], 
+#             s= 500, marker = 'o',alpha = 0.2, color = 'red')  
+ax.scatter(xy_y[:,0],xy_y[:,1], 
+            s= 500, marker = 'o',alpha = 0.2, color = 'red', label = 'Young = %s'%(len(xy_y)))  
 
-# list1 = np.array([x1,y1]).T
-# list2 = np.array([x2,y2]).T
-
-def compare_lists(list1,list2,ls1_x,ls1_y,ls2_x,ls2_y,distancia):
-    
-    
-    
-list1 =coor_pix_t
-list2 =xy_close
-id0_1 ,id1_1 = 0,1
-id0_2, id1_2 = 0,1
-
-ls1_com = np.empty((0,list1.shape[1]))
-ls2_com = np.empty((0,list2.shape[1]))
-coord1 =np.array([list1[:,id0_1],list1[:,id1_2]]).T
-coord2 =np.array([list2[:,id0_2],list2[:,id1_2]]).T
-# coord1 =np.array([list1[:,0],list1[:,1]]).T
-# coord2 =np.array([list2[:,0],list2[:,1]]).T
-tic1 = time.perf_counter()
-dist_A = distance.cdist(coord1[:,0:2],coord2[:,0:2], 'euclidean')
-toc1 = time.perf_counter()
-print('distance matrix tooks %.2f seconds'%(toc1-tic1))
-# dist   = distance.cdist(coord1[:,0:2],coord2[:,0:2], 'euclidean')
-dist = dist_A # for some reason when doing this python also modify dist_A
-# sys.exit()
-# dis the is n_elem(l1)*n_elem[l2] matrix. Each row "i" is the distance between
-# the i-th element in l1 with all the elements in l2
-l1 =[]
-l2 =[]
-# New aproach:
-#     -Flat and sort the distance matrix
-#     -Find the position of the first sorted value in the flatted matrix (row, col)
-#      -If this value is a minimun in its row and column, store both point as 
-#         a match, mark as inf all values in these rows and columns and move to
-#         the nex value
-#      -If not, move to the next sorted distance
-#     -Repeat till the value of the sorted distance is bigger than min distance
-marked = np.zeros((dist.shape[0],dist.shape[1]))
-dist_fs = np.sort(np.reshape(dist_A,dist_A.shape[0]*dist_A.shape[1]))
-tic = time.perf_counter()
-for i in range(len(np.where(dist_fs<distancia)[0])):
-    inds = np.argwhere(dist == dist_fs[i])
-    for j in range(len(inds)):
-        if np.isfinite(dist[inds[j][0],inds[j][1]]) and np.isfinite(dist[inds[j][0],inds[j][1]]):
-            if (dist[inds[j][0],inds[j][1]] <= min(dist[inds[j][0]])) and (dist[inds[j][0],inds[j][1]] <= min(dist[:,inds[j][1]])):
-                dist[inds[j][0]] = float('inf') 
-                dist[:,inds[j][1]] = float('inf') 
-                l1.append(inds[j][0])
-                l2.append(inds[j][1])
-                # print(inds[j][0],inds[j][1])
-toc = time.perf_counter()
-print('matching tooks %.2f seconds'%(toc-tic))
-list1_c = list1[l1]
-list2_c = list2[l2] 
-ind1_c = l1
-ind2_c = l2         
-print(list1_c)
-print(list2_c) 
-print(l1,l2)   
-ax.scatter(list2_c[:,0],list2_c[:,1], 
-           s= 300, marker = '^',alpha = 0.2, color = 'b', label ='Compare lsts\nmax_dis = %spix'%(distancia))    
-ax.scatter(list1_c[:,0],list1_c[:,1], 
-           s= 300, marker = '<',alpha = 0.2, color = 'b')    
-
+# ax.scatter(xy[l2][:,0],xy[l2][:,1], 
+#             s= 300, marker = '^',alpha = 0.2, color = 'b', label ='Compare lsts\nmax_dis = %spix'%(distancia))    
+# ax.scatter(coor_pix_t[l1][:,0],coor_pix_t[l1][:,1], 
+#             s= 300, marker = '<',alpha = 0.2, color = 'b')    
+ax.set_xlabel('x pix')
+ax.set_ylabel('y pix')
 ax.legend()
-    
-    
-    
-    
-    
+# %%
+fig, ax = plt.subplots(1,1)
+ax.scatter(gns_[:,-2][l1], gns_[:,-1][l1])
+ax.scatter(gns_[:,-2][l1_y], gns_[:,-1][l1_y],s = 100, color = 'red', alpha = 0.5)
+
+ax.set_xlabel('x pix')
+ax.set_ylabel('y pix')
+fig, ax = plt.subplots(1,1)
+ax.scatter(gns_[:,9][l1], gns_[:,11][l1])
+ax.scatter(gns_[:,9][l1_y], gns_[:,11][l1_y],s = 100, color = 'red', alpha = 0.5)
+ax.set_xlabel('mu_ra')
+ax.set_ylabel('mu_dec')
+
+gns_header = '0RA_gns 	1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation'
+np.savetxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1],header = gns_header, fmt = '%.8f')
+np.savetxt(spec_young + 'gns_lib_in_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1_y],header = gns_header, fmt = '%8f')
+np.savetxt(spec_young + 'xy_coord_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),xy_y, header = 'x, y',fmt ='%.8f')
+# %%
+# fig, ax = plt.subplots(1,1)
+# test_g = np.loadtxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu))
+# test_p = np.loadtxt(spec_young + 'gns_lib_in_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu))
+# ax.scatter(test_g[:,9],test_g[:,11], s=200)
+# ax.scatter(test_p[:,9],test_p[:,11], s=100)
+
     
     
     
