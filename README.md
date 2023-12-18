@@ -70,11 +70,13 @@ and save them.
 2. ifu_combine.py. Uses the offsets parametres previously extracted for the 
 alingment of the whole cube (for a single IFU)
 
-3. spect_extract.py Extract the sky and the extracts the sky subtracted spectra
-Firsr, choose the *Sky* option in the console, then you have to selecte 
-5 areas free of stars. Then, you run the script again 
-selecting the *Sci* option and click on the stars. A fits file will be saved for 
-each spectrum
-4. spec_comp.py. Plot the spectra and generates a region file with the id of 
-each star and its SNR.
+3. spect_extract.py Extract the spectra and substarct a ring aroubd it
 
+4. continuum.py. Extract continuum channels on a text file, by clicking in the areas. 
+
+5. fitting_continuum.fits. Fits the continum to a polynomial and makes the images.
+> Note: when using the whole image (433x650) it take for ever. Mostly in storing the big(aprox. 6Gb) fits file.
+
+6. source_finder_in_KMOS.py. Match the indentified stars with spectra in GNS (and Lib)
+
+7. kmos_pm.py. Plots positions, velocites and CMD for the stars with a match with GNS_LIB catalog. 
