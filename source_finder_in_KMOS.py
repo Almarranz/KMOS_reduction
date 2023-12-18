@@ -65,15 +65,16 @@ rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 
 # Enable automatic plotting mode
-# IPython.get_ipython().run_line_magic('matplotlib', 'auto')
-IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 # %%
 
-ifu_sel =19#!!!
-half_ifu =2#!!!
+ifu_sel =13#!!!
+half_ifu =1#!!!
 max_d = 5#!!!
 min_d = 2#!!!
 search_r = 0.0015#!!!
+
 
 reduction = 'ABC'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
@@ -83,6 +84,8 @@ spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 # sources = 'auto'#!!!
 sources = 'hand'#!!!
+np.savetxt(spec_folder + 'distance_for_aa_ifu%s_half%s.txt'%(ifu_sel,half_ifu), np.array([max_d,min_d]).T,fmt = '%.0f',header ='max distance,  min distance')
+
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
 # im = fits.open(pruebas  + 'Kmos_image.fits')
 
@@ -228,8 +231,9 @@ ax.legend()
 # xy_close= np.array(xy_close, dtype="<f4")
 coor_pix_close = coor_pix_close.astype(float)
 xy_close= xy_close.astype(float)
+save_lits = 0
 m, (source_list, target_list) = aa.find_transform(coor_pix_close, xy_close,max_control_points=300)
-
+save_lists = 1
 # sys.exit(166)
 
 # %%
@@ -287,10 +291,15 @@ ax.scatter(gns_[:,9][l1_y], gns_[:,11][l1_y],s = 100, color = 'red', alpha = 0.5
 ax.set_xlabel('mu_ra')
 ax.set_ylabel('mu_dec')
 
-gns_header = '0RA_gns 	1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation'
-np.savetxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1],header = gns_header, fmt = '%.8f')
-np.savetxt(spec_young + 'gns_lib_in_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1_y],header = gns_header, fmt = '%8f')
-np.savetxt(spec_young + 'xy_coord_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),xy_y, header = 'x, y',fmt ='%.8f')
+youg_tosave = gns_[l1_y]
+youg_tosave[:,-2:] = lc2_y
+
+if save_lists == 1:
+    gns_header = '0RA_gns 1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation 23Xkmos 24Ykmos'
+    np.savetxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1],header = gns_header, fmt = '%.8f')
+    if len(xy_y) > 0:
+        np.savetxt(spec_young + 'gns_lib_in_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),youg_tosave,header = gns_header, fmt = '%8f')
+        np.savetxt(spec_young + 'xy_coord_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),xy_y, header = 'x, y',fmt ='%.8f')
 # %%
 # fig, ax = plt.subplots(1,1)
 # test_g = np.loadtxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu))

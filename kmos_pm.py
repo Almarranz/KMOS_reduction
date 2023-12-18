@@ -73,6 +73,8 @@ IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # %%
 
 ifu_sel = np.arange(1,25)
+no_data = np.array([2,4,16,14,20,22,24,18])
+ifu_sel = np.delete(ifu_sel,no_data-1)
 half_ifu = [1,2]
 
 reduction = 'ABC'
@@ -83,7 +85,7 @@ spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_
 
 
 
-gns_young_all = np.empty((0,25))
+gns_young_all = np.empty((0,27))
 gns_all= np.empty((0,25))
 ifu_half = np.empty((0,2))
 for ifu in ifu_sel:
@@ -97,7 +99,8 @@ for ifu in ifu_sel:
             if len(gns_young.shape) == 1 or len(kmos_xy.shape) ==1:
                 gns_young = np.reshape(gns_young,(1,25))
                 kmos_xy = np.reshape(kmos_xy,(1,2))
-            gns_young_all = np.append(gns_young_all,gns_young, axis = 0)    
+            # gns_young_all = np.append(gns_young_all,gns_young, axis = 0) 
+            gns_young_all = np.append(gns_young_all, np.c_[gns_young,np.repeat(np.array([[ifu, half]]),len(gns_young),axis = 0)], axis = 0) 
             
             ifu_half = np.append(ifu_half,np.array([ifu, half]))
             print(ifu, half)
@@ -114,7 +117,7 @@ for ifu in ifu_sel:
 # ['#20B065', '#FD5EF9', '#41DE1E', '#E0F774', '#FBC379', '#AAF02C', '#68165F', '#EB103C', '#79452B', '#6C63E7', '#C16BA8', '#E3651E', '#855622', '#E2BFDE', '#E30EAC', '#FC2EC8', '#ED20E1', '#7E4A78', '#C08BEC', '#E6D0B5', '#AC52F5', '#B78ACE', '#6670CF', '#F7DBB5']
 
 colorines = []
-alp = 0.1
+alp = 0.5
 # bg = np.where(((gns_young_all[:,3]-gns_young_all[:,4])> 1.3)&
 #               ((gns_young_all[:,3]-gns_young_all[:,4])<1.9))
 bg = np.where(((gns_young_all[:,3]-gns_young_all[:,4])> 1.3))
@@ -122,7 +125,9 @@ bg = np.where(((gns_young_all[:,3]-gns_young_all[:,4])> 1.3))
 gns_young_all = gns_young_all[bg]
 gns_young_all = gns_young_all[gns_young_all[:,4].argsort()]
 
-bri = np.where(gns_young_all[:,4] < 14.5)
+
+mag_lim = 15
+bri = np.where(gns_young_all[:,4] < mag_lim)
 young_good = gns_young_all[bri]
 s_brig_ra = np.std(young_good[:,9])
 s_brig_dec = np.std(young_good[:,11])
@@ -149,41 +154,51 @@ for i in range(len(gns_young_all)):
     colorines.append("#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
 talla = [i*1 for i in gns_young_all[:,4]]
 # sizs = np.array(np.where(np.array(sizs)< 15,2,0.2))
-colorines = ['#20B065', '#FD5EF9', '#41DE1E', '#E0F774', '#FBC379', '#AAF02C', '#68165F', '#EB103C', '#79452B', '#6C63E7', '#C16BA8', '#E3651E', '#855622', '#E2BFDE', '#E30EAC', '#FC2EC8', '#ED20E1', '#7E4A78', '#C08BEC', '#E6D0B5', '#AC52F5', '#B78ACE', '#6670CF', '#F7DBB5']
+# colorines = ['#20B065', '#FD5EF9', '#41DE1E', '#E0F774', '#FBC379', '#AAF02C', '#68165F', '#EB103C', '#79452B', '#6C63E7', '#C16BA8', '#E3651E', '#855622', '#E2BFDE', '#E30EAC', '#FC2EC8', '#ED20E1', '#7E4A78', '#C08BEC', '#E6D0B5', '#AC52F5', '#B78ACE', '#6670CF', '#F7DBB5']
 
 
 fs = 10
 fb = 40
 sizs =[]
 for i, t in enumerate(talla):
-    if t <14.5:
+    if t <mag_lim:
         sizs.append(fb*talla[i]/(np.round(t) -10))
     else: 
         sizs.append(fs*talla[i]/(np.round(t) -10))
 sizs = np.array(sizs)
 # %%
 # Br_gamma map
-# =============================================================================
-# Brg = fits.open(pruebas  +  'brg_emission.fits')
-# brg_d = Brg[0].data
-# brg_h = Brg[0].header
-# del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_1'],brg_h['CD3_2'],brg_h['CD3_3'],brg_h['CRDER3'],brg_h['CD1_3'],brg_h['CD2_3'],brg_h['CTYPE3 ']
-# 
-# wcs = WCS(brg_h)
-# 
-# =============================================================================
+Brg = fits.open(pruebas  +  'brg_emission.fits')
+brg_d = Brg[0].data
+brg_h = Brg[0].header
+del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_1'],brg_h['CD3_2'],brg_h['CD3_3'],brg_h['CRDER3'],brg_h['CD1_3'],brg_h['CD2_3'],brg_h['CTYPE3 ']
+
+wcs = WCS(brg_h)
+
 fig, ax = plt.subplots(1,3)
 
-r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
+# r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
+r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
+
+young_to_kpix = wcs.wcs_world2pix(gns_young_all[:,0],gns_young_all[:,1],1)
+all_to_kpix = wcs.wcs_world2pix(gns_all[:,0],gns_all[:,1],1)
+# for i in range(5):
+#     ax[0].plot(r[i].vertices.ra.value,r[i].vertices.dec.value, color = 'k',zorder = 0.1,alpha = 0.3)
 for i in range(5):
-    ax[0].plot(r[i].vertices.ra.value,r[i].vertices.dec.value, color = 'k',zorder = 0.1,alpha = 0.3)
+    ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = '#ff7f0e',zorder = 0.1,alpha = 0.7)
+
+
 # ax[0] = plt.subplot(projection=wcs)
-# ax[0].imshow(brg_d, origin='lower',)
-ax[0].scatter(gns_all[:,0],gns_all[:,1], alpha = alp,zorder =0.2)
+im0 = ax[0].imshow(brg_d, cmap='Greys', origin='lower')
+# ax[0].scatter(gns_all[:,0],gns_all[:,1], alpha = alp,zorder =0.2)
+ax[0].scatter(all_to_kpix[0],all_to_kpix[1], alpha = alp,zorder =0.2)
+
 ax[1].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
 
 ax[0].axis('scaled')
-ax[0].scatter(gns_young_all[:,0],gns_young_all[:,1], c = colorines,s = sizs,
+# ax[0].scatter(gns_young_all[:,0],gns_young_all[:,1], c = colorines,s = sizs,
+#               edgecolor = 'k')
+ax[0].scatter(young_to_kpix[0],young_to_kpix[1], c = colorines,s = sizs,
               edgecolor = 'k')
 ax[1].scatter(gns_young_all[:,9],gns_young_all[:,11],c = colorines,s = sizs, 
               alpha = 1,lw =1 , edgecolor = 'k',)
@@ -198,7 +213,7 @@ ax[2].scatter(gns_young_all[:,3]-gns_young_all[:,4],gns_young_all[:,4],
 for t in range(len(gns_young_all[:,3])):
     ax[2].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
                   '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
-                  fontsize = 8,)
+                  fontsize = 12,)
     print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3])
 ax[2].invert_yaxis()
 ax[2].axvline(1.3, color = 'grey', ls = 'dashed', alpha = 0.5)
@@ -208,8 +223,8 @@ ax[2].axis('scaled')
 ax[2].set_xlim(0,5)
 
 
-ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-ax[0].xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+ax[0].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
 ax[0].set_xlabel('RA (º)')
 ax[0].set_ylabel('Dec (º)')
@@ -234,8 +249,47 @@ for lh in leg1.legend_handles:
 # leg2 = ax[2].legend(loc =1,fontsize = 15)
 # for lh2 in leg2.legend_handles: 
 #     lh2.set_alpha(1)
-    
 
+
+# This bit chage pixel in the axes to coordinates, not very accurate though
+# =============================================================================
+# xticks = ax[0].get_xticks()
+# yticks = ax[0].get_yticks()
+# 
+# x_t = np.arange(-100,900,100)
+# y_t = np.arange(-100,900,100)
+# # coor_tiks = wcs.wcs_pix2world(x_t,y_t,1)
+# coor_tiks = wcs.wcs_pix2world(xticks,yticks[:-1],1)
+# 
+# 
+# new_x_tick_labels = np.round(coor_tiks[0] + 0.0086,3)  # Replace with your desired labels
+# new_y_tick_labels =  np.round(coor_tiks[1] + 0.00331,3)  # Replace with your desired labels
+# # %
+# # Set the new tick labels for the x and y axes
+# ax[0].set_xticklabels(new_x_tick_labels)
+# ax[0].set_yticklabels(new_y_tick_labels)
+# =============================================================================
+
+# Add a slider for vmin
+v_min =np.nanmin(brg_d)
+v_max =np.nanmax(brg_d)
+ax_vmin = plt.axes([0.2, 0.1, 0.3, 0.03], facecolor='lightgoldenrodyellow')
+vmin_slider = Slider(ax_vmin, 'vmin', v_min, v_max, valinit=v_min)
+
+# Add a slider for vmax
+ax_vmax = plt.axes([0.2, 0.05, 0.3, 0.03], facecolor='lightgoldenrodyellow')
+vmax_slider = Slider(ax_vmax, 'vmax', v_min, v_max, valinit=v_max)
+
+def update(val):
+    vmin = vmin_slider.val
+    vmax = vmax_slider.val
+    im0.set_clim(vmin, vmax)
+    plt.draw()
+    
+vmin_slider.on_changed(update)
+vmax_slider.on_changed(update)
+
+# fig.colorbar(im0, ax=ax[0], orientation='vertical')
 # %%
 
 
