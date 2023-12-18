@@ -59,8 +59,8 @@ the combined image.
 First we combine epcoh p105 and p107 in order to incrase the SNR. Since the
 images from both epoch are not well alingned, we are goin to aling IFU by IFU
 using just one slice from the cube. Then we apply the alingment to the whole
-cube and calculate the mean cube. 
-Then, manually we extract the spectra using **Qfitsview**
+cube and calculate the mean cube. The we extarct the spectra and match the stars
+in KMOS with the GNS_LIB catalog.
 
 1. kmos_chop.py. Separates the ifu from the rest of the image. Then using ds9
 you have to aling then. The scrip asks you to record the offsets of the 
@@ -70,7 +70,10 @@ and save them.
 2. ifu_combine.py. Uses the offsets parametres previously extracted for the 
 alingment of the whole cube (for a single IFU)
 
-3. spect_extract.py Extract the spectra and substarct a ring aroubd it
+3. spect_extract.py Extract the spectra and substarct a ring aroubd it.
+> Note: When you find a young stasr press 'y' and it will be saved in a special folder.
+
+> Note: many options for the ring around it.
 
 4. continuum.py. Extract continuum channels on a text file, by clicking in the areas. 
 
