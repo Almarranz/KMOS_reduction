@@ -69,7 +69,7 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
 # %%
-ifu_sel = 11
+ifu_sel = 7
 half_ifu = 1
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
@@ -253,22 +253,36 @@ def ring_select(event2):
         colorin = 'fuchsia'
     elif event2.key == 'e':
         colorin = 'brown'
+    elif event2.key == 'd':
+        colorin = 'delete'
+
     return colorin
 
 coor = []
-def extract_spec(cube,y,x, event2): # Use the arrows to select the ring of sky around the object to subtract
-    global temp
+xr,yr = None, None
+
+def extract_spec(cube,y,x,event2): # Use the arrows to select the ring of sky around the object to subtract
+    global temp,temp1
     coor.append([y,x])
-    if len(coor)>1 and coor[-2] == coor[-1]:
+    # Activate rhis to leave the star on the image
+# =============================================================================
+#     if len(coor)>1 and coor[-2] == coor[-1]:
+#         temp.remove()
+# =============================================================================
+    if len(coor)>1 :
         temp.remove()
-    # yy,xx = np.indices(cube_im.shape)
+        temp1.remove()
     xx,yy = np.indices(cube_plot.shape)
-    distances = np.sqrt((xx - x)**2 + (yy - y)**2)
-    mask = np.where(distances <=w)    
+    distances = np.sqrt((xx - x)**2 + (yy - y)**2)  
+    mask = np.where(distances <=w) 
+    # if xr is not None and yr is not None:
+    #     to_r = np.sqrt((xx - xr)**2 + (yy - yr)**2)
+    #     mask = np.where((distances <=w)&(to_r >0.1)) 
+     
     spec = cube[:,mask[0],mask[1]]
     spec_mean = np.mean(spec, axis = 1)
-    ax.scatter(mask[1],mask[0],color = 'lime',s = 50)
-    
+    temp1 = ax.scatter(mask[1],mask[0],color = 'lime',s = 50)
+
     mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
     
     m_y = np.rint((min(mask_around[0]) + max(mask_around[0]))/2)
@@ -304,8 +318,10 @@ def extract_spec(cube,y,x, event2): # Use the arrows to select the ring of sky a
     ring = cube[:, mask_rand[0], mask_rand[1]]
     ring_mean = np.mean(ring, axis =1)
     
-    # temp = ax.scatter(mask_rand[1],mask_rand[0], color = 'green', s = 20)
+    
     temp = ax.scatter(mask_rand[1],mask_rand[0], color = colorin, s = 20)
+    
+
     ax2.plot(lam, ring_mean, color = 'k', alpha = 0.2)
     plt.draw()
     
@@ -347,13 +363,17 @@ def update_plot(x,y):
     color_upd = 'lime'
     x = int(np.rint(x))
     y = int(np.rint(y))
-    plt.scatter(x, y, color= color_upd, marker='x', s=50)  # Customize the marker style
-    circle = Circle((x, y),w, facecolor = 'none', edgecolor = color_upd, linewidth=1)
-    # ax.add_patch(square)
-    ax.add_patch(circle)
-    ax.text(x-w,y-w-1,'%.0f,%.0f'%(x,y), color = color_upd,fontsize = 15)
+    #Plots a circle and clicked coordinates 
+# =============================================================================
+#     plt.scatter(x, y, color= color_upd, marker='x', s=50)  # Customize the marker style
+#     circle = Circle((x, y),w, facecolor = 'none', edgecolor = color_upd, linewidth=1)
+#     # ax.add_patch(square)
+#     ax.add_patch(circle)
+#     ax.text(x-w,y-w-1,'%.0f,%.0f'%(x,y), color = color_upd,fontsize = 15)
+# =============================================================================
+    
      # Redraw the plot with the updated point
-
+     
 
 
 
@@ -410,7 +430,6 @@ def plot_spec(flux):
     
     ax2b.plot(lam,flux, alpha = 0)# I need this for something related with the second axis plot, dont remember why
     
-    
 def bright(y,x):
     x = int(np.rint(x))
     y = int(np.rint(y))
@@ -430,10 +449,10 @@ def bright(y,x):
 
 
 
-
+                        
 def onclick(event):
-    global x, y  # Use global variables
-    if event.xdata is not None and event.ydata is not None:
+    global x, y,xr,yr# Use global variables
+    if event.xdata is not None and event.ydata is not None and event.button == 1:
         x = event.xdata
         y = event.ydata 
         x = int(np.rint(x))
@@ -444,18 +463,20 @@ def onclick(event):
         update_plot(x,y)
         # plot_spec(flux)
         plot_spec(flux_)
-        
+    if event.xdata is not None and event.ydata is not None and event.button == 3:  
+        xr = event.xdata
+        yr = event.ydata 
+        xr = int(np.rint(xr))
+        yr = int(np.rint(yr))
         # sig = np.nanstd(flux)/2
-        print(f'Clicked at x={x}, y={y}')
-    if event.key:
-        print('Your mamma',event.key)
-        
+        print(f'Right Clicked at  x={xr}, y={yr}')
+   
         
 np_spec = []
 clicks = 0 
 def onclick_sky(event):  
         global x, y, clicks, np_spec# Use global variables
-        if event.xdata is not None and event.ydata is not None:
+        if event.xdata is not None and event.ydata is not None :
             x = event.xdata
             y = event.ydata 
             x = int(np.rint(x))
@@ -532,74 +553,26 @@ if sky_cal == 'Sci':
 if sky_cal == 'Sky':
     cid = fig.canvas.mpl_connect('button_press_event',onclick_sky)
 cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
-
-
-# %%
-# import numpy as np
-
-# # Your original tuple of arrays
-# array_tuple = (np.arange(1,61), np.arange(10,610,10))
-
-# # Set a random seed for reproducibility
-# np.random.seed(42)
-
-# # Randomly select 10 indices
-# selected_indices = np.random.choice(len(array_tuple[0]), size=10, replace=False)
-
-# # Use the selected indices to extract elements from each array in the tuple
-# selected_elements = tuple(array[selected_indices] for array in array_tuple)
-
-# print(selected_elements)
-# %%
-# import matplotlib.pyplot as plt
-# from matplotlib.widgets import Slider
-# data = np.random.rand(50, 100)
-
-
-# # Create a figure and axis
-# figA, ax = plt.subplots()
-# plt.subplots_adjust(bottom=0.25)  # Adjust the bottom to make room for the slider
-
-# x0,y0 = 25  ,50
-# a, b = 0,10
-# def test(event3):
-#     print(event3.key)
-#     if event3.key =='up':
-#         print('yomamma')
-# cid_ring = figA.canvas.mpl_connect('key_press_event', test)
-
-# xx,yy = np.indices(data.shape)
-# distances = np.sqrt((xx-x0)**2 + (yy-y0)**2)
-# mask = np.where((distances >=10)&(distances<12))
-# m_y = np.rint((min(mask[0]) + max(mask[0]))/2)
-# m_x = np.rint((min(mask[1]) + max(mask[1]))/2)
-# down = np.where(mask[0]>m_y)
-# up = np.where(mask[0]<m_y)
-# left = np.where(mask[1]<m_x)
-# right = np.where(mask[1]>m_x)
-# circle = np.where(mask[1])
-# # ax.scatter(mask[1][a:b],mask[0][a:b],color = 'red',s = 50)
-# # a = down
-# # a = up
-# # a = left
-# a = right
-# # a = circle
-# m1 = mask[1][a]
-# m2 = mask[0][a]
-# # mask_rand = tuple(array[r_ind] for array in mask_around)
-# m = tuple(array[a] for array in mask)
-# # ax.scatter(mask[1][a],mask[0][a],color = 'red',s = 50)
-# ax.scatter(m[1],m[0],color = 'red',s = 50)
-# ax.scatter(x0,y0, color = 'k',s= 200)
-
-# # Create an initial image
-# image = ax.imshow(data, cmap='viridis')
-# # cid_A = figA.canvas.mpl_connect('key_press_event',w_around)
+# star_del = fig.canvas.mpl_connect('key_press_event',delete_star)
 
 # %%
+# x = 47
+# y =20
 
+# xr = 46
+# yr = 19
+# xx,yy = np.indices(cube_plot.shape)
+# distances = np.sqrt((xx - x)**2 + (yy - y)**2)
+# to_r = np.sqrt((xx - xr)**2 + (yy - yr)**2)
+# mask = np.where((distances <=w)&(to_r >0.1)) 
+# # mask  = np.array(mask)
+# gmask = np
+# cube = ima[1].data
+# # spec = cube[:,mask[0],mask[1]]
+# spec = cube[:,mask]
 
-
+# fig, ax = plt.subplots(1,1)
+# ax.scatter(mask[0],mask[1])
 
 
 
