@@ -253,15 +253,32 @@ def ring_select(event2):
         colorin = 'fuchsia'
     elif event2.key == 'e':
         colorin = 'brown'
-    elif event2.key == 'd':
-        colorin = 'delete'
+   
 
     return colorin
 
+# xr, yr = None, None
+xr_ls = []
+yr_ls = []
+def onclick_right(event):
+    # global xr, yr
+    if event.button == 3:
+        xr = event.xdata
+        yr = event.ydata
+        xr = int(np.rint(xr))
+        yr = int(np.rint(yr))
+        # sig = np.nanstd(flux)/2
+        print(f'Right Clicked at  x={xr}, y={yr}')
+        yr_ls.append(xr)
+        xr_ls.append(yr)
+    # else:
+    #     xr_ls.append(None)
+    #     yr_ls.append(None)
+        # xr, yr = None, None
+    # return xr, yr
 coor = []
-xr,yr = None, None
 
-def extract_spec(cube,y,x,event2): # Use the arrows to select the ring of sky around the object to subtract
+def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of sky around the object to subtract
     global temp,temp1
     coor.append([y,x])
     # Activate rhis to leave the star on the image
@@ -274,14 +291,26 @@ def extract_spec(cube,y,x,event2): # Use the arrows to select the ring of sky ar
         temp1.remove()
     xx,yy = np.indices(cube_plot.shape)
     distances = np.sqrt((xx - x)**2 + (yy - y)**2)  
-    mask = np.where(distances <=w) 
-    # if xr is not None and yr is not None:
-    #     to_r = np.sqrt((xx - xr)**2 + (yy - yr)**2)
-    #     mask = np.where((distances <=w)&(to_r >0.1)) 
-     
-    spec = cube[:,mask[0],mask[1]]
+    # mask = np.where(distances <=w) 
+    
+    
+    if len(xr_ls)>0:
+        print('yomamma')
+        # to_r = np.sqrt((xx - yr_ls[-1])**2 + (yy - xr_ls[-1])**2)
+        # mask = np.where((distances <=w)&(to_r >0.1))  
+        mask = distances <=w 
+        mask[xr_ls,yr_ls] = False
+        print('len(mask)',len(mask[0]))
+    else:
+        # mask = np.where(distances <=w) 
+        mask = distances <=w 
+        print('np.where(mask == True)[0]',np.where(mask == True)[0])
+    # spec = cube[:,mask[0],mask[1]]
+    # spec_mean = np.mean(spec, axis = 1)
+    # temp1 = ax.scatter(mask[1],mask[0],color = 'lime',s = 50)
+    spec = cube[:,mask]
     spec_mean = np.mean(spec, axis = 1)
-    temp1 = ax.scatter(mask[1],mask[0],color = 'lime',s = 50)
+    temp1 = ax.scatter(np.where(mask == True)[1],np.where(mask == True)[0],color = 'lime',s = 50)
 
     mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
     
@@ -459,17 +488,11 @@ def onclick(event):
         y = int(np.rint(y))
         x,y = bright(y,x)
         # flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)))
-        flux,flux_ = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event)
+        flux,flux_ = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event,event)
         update_plot(x,y)
         # plot_spec(flux)
         plot_spec(flux_)
-    if event.xdata is not None and event.ydata is not None and event.button == 3:  
-        xr = event.xdata
-        yr = event.ydata 
-        xr = int(np.rint(xr))
-        yr = int(np.rint(yr))
-        # sig = np.nanstd(flux)/2
-        print(f'Right Clicked at  x={xr}, y={yr}')
+    
    
         
 np_spec = []
@@ -550,10 +573,38 @@ def delete(event):
 if sky_cal == 'Sci':
     cid = fig.canvas.mpl_connect('button_press_event',onclick)
     cid_ring = fig.canvas.mpl_connect('key_press_event', ring_select)
+    cid_right = fig.canvas.mpl_connect('button_press_event', onclick_right)
 if sky_cal == 'Sky':
     cid = fig.canvas.mpl_connect('button_press_event',onclick_sky)
 cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
 # star_del = fig.canvas.mpl_connect('key_press_event',delete_star)
+
+
+# %%
+
+# import numpy as np
+
+# Assuming you have the cube, x, y, and w
+# cube = ima[1].data  # Replace this with your actual cube data
+# cube_plot = np.nanmedian(cube, axis=0)
+# xx, yy = np.indices(cube_plot.shape)
+# x = 47
+# y = 20
+# w = 3
+
+# # Create a mask for points within distance w
+# distances = np.sqrt((xx - x)**2 + (yy - y)**2)
+# mask = distances <= w
+
+# # Exclude the specific point (xr, yr) from the mask
+# xr = [47,47,47,45] # Replace with the actual x-coordinate to exclude
+# yr = [20,22,18,19]  # Replace with the actual y-coordinate to exclude
+# mask[[xr],[yr]] = False
+
+# # Use the modified mask to extract the chunk of the cube
+# spec = cube[:, mask]
+# fig, ax = plt.subplots(1,1)
+# ax.scatter(np.where(mask == True)[0],np.where(mask == True)[1])
 
 # %%
 # x = 47
@@ -561,20 +612,20 @@ cid_del = fig2.canvas.mpl_connect('key_press_event',delete)
 
 # xr = 46
 # yr = 19
+# cube = ima[1].data
+# cube_plot = np.nanmedian(cube, axis = 0)
 # xx,yy = np.indices(cube_plot.shape)
 # distances = np.sqrt((xx - x)**2 + (yy - y)**2)
 # to_r = np.sqrt((xx - xr)**2 + (yy - yr)**2)
 # mask = np.where((distances <=w)&(to_r >0.1)) 
 # # mask  = np.array(mask)
 # gmask = np
-# cube = ima[1].data
+
 # # spec = cube[:,mask[0],mask[1]]
 # spec = cube[:,mask]
 
 # fig, ax = plt.subplots(1,1)
 # ax.scatter(mask[0],mask[1])
-
-
 
 
 
