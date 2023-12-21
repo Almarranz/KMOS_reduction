@@ -58,6 +58,7 @@ IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 
 
+# reduction = 'tramos'
 reduction = 'ABC'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
@@ -69,7 +70,7 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
 # %%
-ifu_sel = 7
+ifu_sel = 6
 half_ifu = 1
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
@@ -169,7 +170,7 @@ if sky_cal == 'Sci':
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
 
 
-ax.set_title('%s, IFU %s, Half %s '%(sky_cal, ifu_sel, half_ifu))
+ax.set_title('%s, IFU %s, Half %s(%s)\nLc: spec, Rc: del pixel, dRc: reset '%(sky_cal, ifu_sel, half_ifu,reduction))
 #Uncomment these for the WCS projection 
 # =============================================================================
 # ax.axis("off")
@@ -216,7 +217,7 @@ x = None
 y = None
 wide = 5.3#!!!! This is the FWHM of the standard star in the KMOS pipeline 
 w = int(np.rint(wide/2))
-
+# w = 1              
 # event2 = 0
 # def w_around(event):
 #     if event.key is not None and event.key.isdigit() is True:
@@ -253,7 +254,8 @@ def ring_select(event2):
         colorin = 'fuchsia'
     elif event2.key == 'e':
         colorin = 'brown'
-   
+    # elif event2.key == 'e':
+    #      colorin = 'white'
 
     return colorin
 
@@ -262,6 +264,7 @@ xr_ls = []
 yr_ls = []
 def onclick_right(event):
     # global xr, yr
+    # print('EVENT',event)
     if event.button == 3:
         xr = event.xdata
         yr = event.ydata
@@ -271,9 +274,10 @@ def onclick_right(event):
         print(f'Right Clicked at  x={xr}, y={yr}')
         yr_ls.append(xr)
         xr_ls.append(yr)
-    # else:
-    #     xr_ls.append(None)
-    #     yr_ls.append(None)
+    if event.button == 3 and event.dblclick == True:
+        print('EVENT mamma',event)
+        xr_ls.clear()
+        yr_ls.clear()
         # xr, yr = None, None
     # return xr, yr
 coor = []
@@ -311,9 +315,10 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
     spec = cube[:,mask]
     spec_mean = np.mean(spec, axis = 1)
     temp1 = ax.scatter(np.where(mask == True)[1],np.where(mask == True)[0],color = 'lime',s = 50)
-
-    mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
     
+    # w0 = 3
+    # mask_around = np.where((distances>w0*2)&(distances<w0*2 + w2))
+    mask_around = np.where((distances>w*2)&(distances<w*2 + w2))
     m_y = np.rint((min(mask_around[0]) + max(mask_around[0]))/2)
     m_x = np.rint((min(mask_around[1]) + max(mask_around[1]))/2)
     down = np.where(mask_around[0]<m_y)
@@ -321,7 +326,7 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
     left = np.where(mask_around[1]<m_x)
     right = np.where(mask_around[1]>m_x)
     circle = np.where(mask_around[1])
-    middle = np.where((mask_around[0] > m_y -3) &((mask_around[0] < m_y +3)))
+    middle = np.where((mask_around[1] > m_x -5) &((mask_around[1] < m_x +5)))
     m = tuple(array[circle] for array in mask_around)
     colorin = ring_select(event2)
     if colorin == 'red':
@@ -505,7 +510,7 @@ def onclick_sky(event):
             x = int(np.rint(x))
             y = int(np.rint(y))
             x,y = bright(y,x)
-            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event)
+            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event,event)
             update_plot(x,y)
             plot_spec(flux)            
             # sig = np.nanstd(flux)/2
@@ -532,7 +537,7 @@ def delete(event):
         #     ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
         #                 np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
         if event.key == 'y':
-            flux_young = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event)
+            flux_young = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event, event)
             h_esp = fits.open(model)[0].header
             h_esp.append(('X_full', x_d + x, '+1 on image'), end=True)
             h_esp.append(('Y_full', y_d + y, '+1 on image'), end=True)
@@ -543,7 +548,7 @@ def delete(event):
     if sky_cal == 'Sky':
         
         if event.key == 'g':
-            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event)
+            flux = extract_spec(cube,int(np.rint(x)), int(np.rint(y)), event,event)
             print(f'Saved at x={x}, y={y}, clicks = {clicks}')
             np_spec.append(flux)
             print('Saved %s arrays'%(len(np_spec)))
