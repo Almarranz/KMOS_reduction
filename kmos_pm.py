@@ -42,6 +42,7 @@ import random
 from astropy.stats import sigma_clip
 from matplotlib.ticker import FormatStrFormatter
 from regions import Regions
+from astropy.utils.data import get_pkg_data_filename
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -126,7 +127,7 @@ gns_young_all = gns_young_all[bg]
 gns_young_all = gns_young_all[gns_young_all[:,4].argsort()]
 
 
-mag_lim = 15
+mag_lim = 14.5#!!!
 bri = np.where(gns_young_all[:,4] < mag_lim)
 young_good = gns_young_all[bri]
 s_brig_ra = np.std(young_good[:,9])
@@ -154,7 +155,7 @@ for i in range(len(gns_young_all)):
     colorines.append("#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
 talla = [i*1 for i in gns_young_all[:,4]]
 # sizs = np.array(np.where(np.array(sizs)< 15,2,0.2))
-# colorines = ['#20B065', '#FD5EF9', '#41DE1E', '#E0F774', '#FBC379', '#AAF02C', '#68165F', '#EB103C', '#79452B', '#6C63E7', '#C16BA8', '#E3651E', '#855622', '#E2BFDE', '#E30EAC', '#FC2EC8', '#ED20E1', '#7E4A78', '#C08BEC', '#E6D0B5', '#AC52F5', '#B78ACE', '#6670CF', '#F7DBB5']
+colorines = ['#7521E9', '#F7E699', '#AB53DC', '#CC3B33', '#6AF297', '#76D632', '#CEDAC7', '#DBAF86', '#FAFB80', '#3EDC7B', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F']
 
 
 fs = 10
@@ -174,6 +175,7 @@ brg_h = Brg[0].header
 del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_1'],brg_h['CD3_2'],brg_h['CD3_3'],brg_h['CRDER3'],brg_h['CD1_3'],brg_h['CD2_3'],brg_h['CTYPE3 ']
 
 wcs = WCS(brg_h)
+# wcs = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
 fig, ax = plt.subplots(1,3)
 
@@ -191,7 +193,7 @@ for i in range(5):
 # ax[0] = plt.subplot(projection=wcs)
 im0 = ax[0].imshow(brg_d, cmap='Greys', origin='lower')
 # ax[0].scatter(gns_all[:,0],gns_all[:,1], alpha = alp,zorder =0.2)
-ax[0].scatter(all_to_kpix[0],all_to_kpix[1], alpha = alp,zorder =0.2)
+sc = ax[0].scatter(all_to_kpix[0],all_to_kpix[1], alpha = alp,zorder =0.2)
 
 ax[1].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
 
@@ -214,10 +216,12 @@ for t in range(len(gns_young_all[:,3])):
     ax[2].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
                   '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
                   fontsize = 12,)
-    print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3])
+    if gns_young_all[t,4] < mag_lim:
+        print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3])
 ax[2].invert_yaxis()
 ax[2].axvline(1.3, color = 'grey', ls = 'dashed', alpha = 0.5)
 ax[2].axvline(1.9, color = 'grey', ls = 'dashed', alpha = 0.5)
+ax[2].axhline(mag_lim, color = 'grey', ls = 'dashed', alpha = 0.5)
 
 ax[2].axis('scaled')
 ax[2].set_xlim(0,5)
@@ -246,29 +250,7 @@ leg1 = ax[1].legend(fontsize = 15)
 
 for lh in leg1.legend_handles: 
     lh.set_alpha(1)
-# leg2 = ax[2].legend(loc =1,fontsize = 15)
-# for lh2 in leg2.legend_handles: 
-#     lh2.set_alpha(1)
 
-
-# This bit chage pixel in the axes to coordinates, not very accurate though
-# =============================================================================
-# xticks = ax[0].get_xticks()
-# yticks = ax[0].get_yticks()
-# 
-# x_t = np.arange(-100,900,100)
-# y_t = np.arange(-100,900,100)
-# # coor_tiks = wcs.wcs_pix2world(x_t,y_t,1)
-# coor_tiks = wcs.wcs_pix2world(xticks,yticks[:-1],1)
-# 
-# 
-# new_x_tick_labels = np.round(coor_tiks[0] + 0.0086,3)  # Replace with your desired labels
-# new_y_tick_labels =  np.round(coor_tiks[1] + 0.00331,3)  # Replace with your desired labels
-# # %
-# # Set the new tick labels for the x and y axes
-# ax[0].set_xticklabels(new_x_tick_labels)
-# ax[0].set_yticklabels(new_y_tick_labels)
-# =============================================================================
 
 # Add a slider for vmin
 v_min =np.nanmin(brg_d)
@@ -291,21 +273,162 @@ vmax_slider.on_changed(update)
 
 # fig.colorbar(im0, ax=ax[0], orientation='vertical')
 # %%
+lib_pruebas = '/Users/amartinez/Desktop/PhD/Libralato_data/pruebas/'
+# Ra_cl, Dec_cl, mura_cl,mudec_cl, H, Ks
+Ra_cl, Dec_cl, mura_cl,mudec_cl, H_cl, Ks_cl,ms_id= np.loadtxt(lib_pruebas + 'clus_14996_16_55.txt', unpack=True)
+# lib_cl= np.loadtxt(lib_pruebas + 'clus_14996_16_55.txt', unpack=True)
+fig, ax = plt.subplots(1,1)
+ax.scatter(gns_young_all[:,0],gns_young_all[:,1],s = sizs, c= colorines)
+ax.scatter(Ra_cl,Dec_cl, marker = 'x')
+# %%
+
+
+fig, ax = plt.subplots(1,2)
+ax[0].scatter(gns_young_all[:,10], gns_young_all[:,12], s = sizs, c = colorines)
+ax[0].set_xlabel('$\sigma \mu_{RA}$(mas/yr)')
+ax[0].set_ylabel('$\sigma \mu_{Dec}$(mas/yr)')
+ax[0].axis('scaled')
+error = np.sqrt(gns_young_all[:,10]**2 + gns_young_all[:,12]**2)
+ax[1].scatter(gns_young_all[:,4], error, s = sizs, c = colorines)
+ax[1].set_ylabel('$\sigma \mu$(mas/yr)')
+ax[1].set_xlabel('Ks')
+ax[1].axis('scaled')
+
+
+# %%
+eso_pro = '/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS'
+esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'%(reduction)
+
+# abc_one =
+
+# Load your FITS file and create the WCS
+# fits_file = get_pkg_data_filename('one_ABC.fits')
+image_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
+image_data = np.squeeze(image_data) 
+mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
+fig, ax = plt.subplots(subplot_kw={'projection': mapa})  # Adjust the figsize as needed
+
+fig = plt.figure()  # Adjust the figsize as needed
+ax = plt.subplot(projection=mapa)
+lon = ax.coords[0]
+lat = ax.coords[1]
+lon.set_ticks(spacing=5. * u.arcsec)
+lat.set_ticks(spacing=5. * u.arcsec)
+ax.tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
+ax.imshow(image_data, vmin=-0.8e-20, vmax=0.3e-17, origin='lower', cmap='Greys', label ='KMOS')
+
+ax.grid()
+
+lon.set_ticks_visible(True)
+lon.set_ticklabel_visible(True)
+# lat.set_ticklabel_visible(True)
+# lat.set_ticklabel_visible(True)
+# lat.set_ticks_visible(False)
+lat.set_ticklabel(rotation='vertical')
+ax.coords[0].set_axislabel('RA')
+ax.coords[1].set_axislabel('Dec')
+xticks = ax.get_xticks()
+yticks = ax.get_yticks()
+print("X-axis tick locations:", xticks)
+print("Y-axis tick locations:", yticks)
+# sys.exit(343)
+# ax.
+
+
+# %%
+
+# # Enable automatic plotting mode
+# # IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+
+eso_pro = '/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS'
+esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'%(reduction)
+
+# abc_one =
+
+# Load your FITS file and create the WCS
+# fits_file = get_pkg_data_filename('one_ABC.fits')
+
+brg_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
+im_data = fits.getdata(esorex_ima_5, ext=1)
+brg_data = np.squeeze(brg_data) 
+mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
 
 
 
+fig, ax = plt.subplots(2,1,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
+
+
+# r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
+r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
+
+
+for i in range(11):
+    ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
 
 
 
+lon = ax[0].coords[0]
+lat = ax[0].coords[1]
+lon1 = ax[1].coords[0]
+lat1 = ax[1].coords[1]
 
+lon.set_ticks(spacing=5. * u.arcsec)
+lat.set_ticks(spacing=7. * u.arcsec)
+lon1.set_ticks(spacing=5. * u.arcsec)
+lat1.set_ticks(spacing=7. * u.arcsec)
+ax[0].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
+ax[1].tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
 
+ax[1].imshow(brg_data, vmin=-0.8e-20, vmax=0.3e-17, origin='lower', cmap='Greys', label ='KMOS')
+ima1 = ax[0].imshow(im_data, vmin=-0.011e-16, vmax=0.136e-16, origin='lower', cmap='Greys', label ='KMOS')
+ax[0].scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], c = np.array(colorines)[bri],s = sizs[bri]*0.7,
+              edgecolor = 'k')
+ax[1].scatter(young_to_kpix[0][bri],young_to_kpix[1][bri],  c = np.array(colorines)[bri],s = sizs[bri]*0.7,
+              edgecolor = 'k')
 
+# ax[0].grid()
 
+lon.set_ticks_visible(True)
+lon.set_ticklabel_visible(False)
+# lat.set_ticklabel_visible(True)
+# lat1.set_ticklabel_visible(False)
+# lat1.set_ticks_visible(False)
+lat.set_ticklabel(rotation='vertical')
+lat1.set_ticklabel(rotation='vertical')
+ax[0].coords[0].set_axislabel('RA')
+ax[0].coords[1].set_axislabel('Dec')
+ax[1].coords[0].set_axislabel('RA')
+ax[1].coords[1].set_axislabel('Dec ')
 
+xticks = ax[0].get_xticks()
+yticks = ax[0].get_yticks()
+print("X-axis tick locations:", xticks)
+print("Y-axis tick locations:", yticks)
 
+ax[0].tick_params(length=4, width=0.5)
+ax[1].tick_params(length=4, width=0.5)
 
-
-
-
-
+# plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
+# 
+# =============================================================================
+# # Add a slider for vmin
+# v_min =np.nanmin(im_data)
+# v_max =np.nanmax(im_data)
+# ax_vmin = plt.axes([0.2, 0.1, 0.3, 0.03], facecolor='lightgoldenrodyellow')
+# vmin_slider = Slider(ax_vmin, 'vmin', v_min, v_max, valinit=v_min)
+# 
+# # Add a slider for vmax
+# ax_vmax = plt.axes([0.2, 0.05, 0.3, 0.03], facecolor='lightgoldenrodyellow')
+# vmax_slider = Slider(ax_vmax, 'vmax', v_min, v_max, valinit=v_max)
+# 
+# def update(val):
+#     vmin = vmin_slider.val
+#     vmax = vmax_slider.val
+#     ima1.set_clim(vmin, vmax)
+#     plt.draw()
+#     
+# vmin_slider.on_changed(update)
+# vmax_slider.on_changed(update)
+# =============================================================================
