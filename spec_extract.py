@@ -70,8 +70,8 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
 # %%
-ifu_sel = 6
-half_ifu = 1
+ifu_sel = 3
+half_ifu = 2
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 aligned_cube = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/cube_ifu%s_half%s_mean.fits'%(reduction,ifu_sel,half_ifu)
@@ -159,13 +159,13 @@ cube = ima[1].data
 
 # sky_cal = input('Choose: Sci or Sky?')#TODO
 sky_cal = 'Sci' #TODO
-if sky_cal == 'Sci':
-    if os.path.isfile(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
-        difuse_flux = fits.open(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))[0].data
-        print('There is difuse emission sprectrum!')
-    else:
-        print('There is no sky compted for ifu = %s, half = %s'%(ifu_sel,half_ifu))
-        sys.exit('DO IT!')
+# if sky_cal == 'Sci':
+#     if os.path.isfile(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu)):
+#         difuse_flux = fits.open(spec_folder  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))[0].data
+#         print('There is difuse emission sprectrum!')
+#     else:
+#         print('There is no sky compted for ifu = %s, half = %s'%(ifu_sel,half_ifu))
+#         sys.exit('DO IT!')
 
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
 
@@ -254,8 +254,8 @@ def ring_select(event2):
         colorin = 'fuchsia'
     elif event2.key == 'e':
         colorin = 'brown'
-    # elif event2.key == 'e':
-    #      colorin = 'white'
+    elif event2.key == 't':
+          colorin = 'white'
 
     return colorin
 
@@ -290,6 +290,8 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
 #     if len(coor)>1 and coor[-2] == coor[-1]:
 #         temp.remove()
 # =============================================================================
+        
+        
     if len(coor)>1 :
         temp.remove()
         temp1.remove()
@@ -327,6 +329,7 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
     right = np.where(mask_around[1]>m_x)
     circle = np.where(mask_around[1])
     middle = np.where((mask_around[1] > m_x -5) &((mask_around[1] < m_x +5)))
+    up_small = np.where(mask_around[0]>m_y + 6)
     m = tuple(array[circle] for array in mask_around)
     colorin = ring_select(event2)
     if colorin == 'red':
@@ -341,6 +344,8 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
         m = tuple(array[circle] for array in mask_around)
     if colorin == 'brown':
         m = tuple(array[middle] for array in mask_around)
+    if colorin == 'white':
+        m = tuple(array[up_small] for array in mask_around)
         print(mask_around)
         print(middle)
     
@@ -537,11 +542,11 @@ def delete(event):
         #     ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
         #                 np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
         if event.key == 'y':
-            flux_young = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event, event)
+            flux_young, flux_young_no_sky = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event, event)
             h_esp = fits.open(model)[0].header
             h_esp.append(('X_full', x_d + x, '+1 on image'), end=True)
             h_esp.append(('Y_full', y_d + y, '+1 on image'), end=True)
-            hdu_young = fits.PrimaryHDU(data = flux_young, header=h_esp)
+            hdu_young = fits.PrimaryHDU(data = flux_young_no_sky, header=h_esp)
             hdu_young.writeto(spec_young + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
         
             
