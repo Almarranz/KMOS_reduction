@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jan  4 13:51:29 2024
+
+@author: amartinez
+"""
+
+# Plottim the spectra for the YSO with good SNR found in the whole KMOS fov
+
+import sys
+import glob
+from subprocess import call
+import astropy.units as u
+from astropy.utils.data import download_file
+from astropy.io import fits  # We use fits to open the actual data file
+import matplotlib.pyplot as plt
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from astropy.wcs import WCS
+from matplotlib.colors import LogNorm
+from matplotlib.tri import Triangulation
+import regions
+from matplotlib.patches import Rectangle
+from matplotlib.patches import Circle
+import IPython
+import tkinter as tk
+from tkinter import simpledialog
+import shutil
+from matplotlib.widgets import Slider
+import random
+import re
+import numpy as np
+
+
+# %%plotting pa    metres
+from matplotlib import rc
+from matplotlib import rcParams
+rcParams.update({'xtick.major.pad': '7.0'})
+rcParams.update({'xtick.major.size': '7.5'})
+rcParams.update({'xtick.major.width': '1.5'})
+rcParams.update({'xtick.minor.pad': '7.0'})
+rcParams.update({'xtick.minor.size': '3.5'})
+rcParams.update({'xtick.minor.width': '1.0'})
+rcParams.update({'ytick.major.pad': '7.0'})
+rcParams.update({'ytick.major.size': '7.5'})
+rcParams.update({'ytick.major.width': '1.5'})
+rcParams.update({'ytick.minor.pad': '7.0'})
+rcParams.update({'ytick.minor.size': '3.5'})
+rcParams.update({'ytick.minor.width': '1.0'})
+rcParams.update({'font.size': 20})
+rcParams.update({'figure.figsize':(30,30)})
+rcParams.update({
+    "text.usetex": False,
+    "font.family": "sans",
+    "font.sans-serif": ["Palatino"]})
+plt.rcParams["mathtext.fontset"] = 'dejavuserif'
+rc('font',**{'family':'serif','serif':['Palatino']})
+plt.rcParams.update({'figure.max_open_warning': 0})
+# %%
+# Enable automatic plotting mode
+IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+
+reduction = 'ABC'
+pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
+aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
+log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
+esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
+esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'%(reduction)
+log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
+
+
+HeI = 2.058
+COI =  2.29322
+COII = 2.32246
+COIII = 2.3525
+Brg = 2.165
+He = 2.12
+HeII = 2.189
+# H2 = 2.12
+l_names = ['HeI', 'COI', 'COII','Br$\gamma$', 'He', 'HeII','C0III']
+lines = [HeI, COI, COII,Brg, He, HeII,COIII]
+
+age = 'young_candidates'
+reductions = ['ABC']
+ls_spec = np.loadtxt(pruebas + 'ls_young.txt')
+# ls_spec = np.delete(ls_spec,1, axis =0)
+colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f']
+
+fig, ax = plt.subplots(len(ls_spec), 1, figsize = (15,18))
+fig.subplots_adjust(hspace=0)
+
+lim_d, lim_u = 2, COIII +0.01
+
+norm_0, norm_1 = HeI, He
+
+for i in range(len(ls_spec)):
+    ax[i].set_xlim(lim_d, lim_u)
+    ifu_sel = ls_spec[i][0]
+    half_ifu = ls_spec[i][1]
+    x, y = ls_spec[i][2], ls_spec[i][3]
+    spec_fol = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/%s/ifu_%.0f/half_%.0f/'%(reductions[0],age,ifu_sel,half_ifu)
+    spec = fits.open(spec_fol + 'spec_ifu%.0f_half%.0f_%.0f_%.0f.fits'%(ifu_sel, half_ifu, x, y))
+    cab = spec[0].header
+    sp_data = spec[0].data
+    lam = np.array([cab['CRVAL1']+cab['CDELT1']*i for i in range(cab['NAXIS1'])])
+    lam_selc = np.where((lam > norm_0) &(lam<norm_1))
+    flat_flux = np.nanmean(sp_data[lam_selc])
+    print(flat_flux)
+    ax[i].set_ylim(flat_flux*0.5, flat_flux*2)
+     # ax[i].plot(lam,sp_data, label = 'x=%s\ny=%s'%(cab['X_FULL']+1,cab['Y_FULL']+1))
+    ax[i].plot(lam,sp_data, label = 'Y%s'%(i+1), lw = 1, color = colorines[i])
+    # ax[i].tick_params(left = False, right = False , labelleft = False , 
+    #             labelbottom = False, bottom = False) 
+    for l in lines:
+        ax[i].axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed') 
+    ax[i].legend(loc = 2, fontsize = 15)
+ax[i].tick_params(left = False, right = False , labelleft = False , 
+              labelbottom = True, bottom = True, labelsize = 20) 
+ax[i].set_xlabel('$\lambda (\mu m)$', fontsize = 20)    
+ax2 = ax[0].twiny()
+ax2.set_xlim(lim_d, lim_u)
+ax2.set_xticks(lines)
+tl = l_names
+ax2.set_xticklabels(tl, fontsize = 20)
+ax2.plot(lam,sp_data, alpha = 0)
+
+
+plt.savefig(pruebas + 'spectra_young.png', dpi =300, bbox_inches = 'tight')
+
+
+# %%
+# In this section we are going to plot the spectra of some Late type star for 
+# showing a comparation with the YSO
+
+fig, ax = plt.subplots(len(ls_spec), 1, figsize = (15,18))
+fig.subplots_adjust(hspace=0)
+late_t = np.loadtxt(pruebas + 'late_type_for_comparation.txt')
+
+lim_d, lim_u = 2, COIII +0.01
+
+
+for i,y in enumerate(late_t):
+    ax[i].set_xlim(2, COIII +0.01)
+    print(y)
+    all_fol = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%.0f/half_%.0f/'%(reductions[0],y[0],y[1])
+    all_spec = np.loadtxt(all_fol + 'gns_lib_in_kmos_ifu%.0f_half%.0f.txt'%(y[0],y[1]))
+    # print(all_spec[:,4])
+    id_mag = np.where(all_spec[:,4] == y[2])
+    x_l, y_l = all_spec[id_mag][0][-1],all_spec[id_mag][0][-2]
+    print(x_l, y_l)
+    spec_late = fits.open(all_fol + 'spec_ifu%.0f_half%.0f_%.0f_%.0f.fits'%(y[0],y[1],x_l,y_l))
+    cab_late = spec_late[0].header
+    sp_late = spec_late[0].data
+    lam_late = np.array([cab_late['CRVAL1']+cab_late['CDELT1']*i for i in range(cab_late['NAXIS1'])])
+    lam_selc_late= np.where((lam_late > norm_0) &(lam_late<norm_1))
+    flat_flux_late = np.nanmean(sp_data[lam_selc_late])
+    print(flat_flux_late)
+    ax[i].set_ylim(flat_flux_late*0.5, flat_flux_late*2)
+    ax[i].set_ylim(0.1e-17, 3e-17)
+
+    # ax[i].plot(lam_late, sp_late/flat_flux_late )
+    ax[i].plot(lam_late, sp_late )
+    for l in lines:
+        ax[i].axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed') 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -89,6 +89,7 @@ spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_
 gns_young_all = np.empty((0,27))
 gns_all= np.empty((0,25))
 ifu_half = np.empty((0,2))
+ifu_half_all = np.empty((0,2))
 for ifu in ifu_sel:
     for half in half_ifu:
         spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu, half)
@@ -104,21 +105,23 @@ for ifu in ifu_sel:
             gns_young_all = np.append(gns_young_all, np.c_[gns_young,np.repeat(np.array([[ifu, half]]),len(gns_young),axis = 0)], axis = 0) 
             
             ifu_half = np.append(ifu_half,np.array([ifu, half]))
-            print(ifu, half)
+            print(ifu, half,kmos_xy)
         if os.path.isfile(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu, half)):
             # 0RA_gns 	1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	
             gns_data = np.loadtxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu, half))
-            gns_all = np.append(gns_all,gns_data,axis=0)                            
+            gns_all = np.append(gns_all,gns_data,axis=0) 
+            ifu_half_all = np.append(ifu_half_all, np.repeat(np.array([[ifu, half]]),len(gns_data),axis = 0), axis = 0)                           
         if  os.path.isfile(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu, half)) == False:
             print('No proper motions in ifu%s half%s'%(ifu, half))
-
+gns_all = np.c_[gns_all, ifu_half_all]
+# sys.exit()
 # 0RA_gns 	1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation
 # %%
 # This is a good set of colors
 # ['#20B065', '#FD5EF9', '#41DE1E', '#E0F774', '#FBC379', '#AAF02C', '#68165F', '#EB103C', '#79452B', '#6C63E7', '#C16BA8', '#E3651E', '#855622', '#E2BFDE', '#E30EAC', '#FC2EC8', '#ED20E1', '#7E4A78', '#C08BEC', '#E6D0B5', '#AC52F5', '#B78ACE', '#6670CF', '#F7DBB5']
 
 colorines = []
-alp = 0.5
+alp = 0.2#!!!
 # bg = np.where(((gns_young_all[:,3]-gns_young_all[:,4])> 1.3)&
 #               ((gns_young_all[:,3]-gns_young_all[:,4])<1.9))
 bg = np.where(((gns_young_all[:,3]-gns_young_all[:,4])> 1.3))
@@ -155,7 +158,8 @@ for i in range(len(gns_young_all)):
     colorines.append("#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
 talla = [i*1 for i in gns_young_all[:,4]]
 # sizs = np.array(np.where(np.array(sizs)< 15,2,0.2))
-colorines = ['#7521E9', '#F7E699', '#AB53DC', '#CC3B33', '#6AF297', '#76D632', '#CEDAC7', '#DBAF86', '#FAFB80', '#3EDC7B', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F']
+colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F']
+# defa_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf']
 
 
 fs = 10
@@ -169,6 +173,7 @@ for i, t in enumerate(talla):
 sizs = np.array(sizs)
 # %%
 # Br_gamma map
+y_size = 100#!!!
 Brg = fits.open(pruebas  +  'brg_emission.fits')
 brg_d = Brg[0].data
 brg_h = Brg[0].header
@@ -177,101 +182,98 @@ del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_
 wcs = WCS(brg_h)
 # wcs = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
-fig, ax = plt.subplots(1,3)
+fig, ax = plt.subplots(2,1, figsize = (5,10))
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
 
 young_to_kpix = wcs.wcs_world2pix(gns_young_all[:,0],gns_young_all[:,1],1)
 all_to_kpix = wcs.wcs_world2pix(gns_all[:,0],gns_all[:,1],1)
-# for i in range(5):
-#     ax[0].plot(r[i].vertices.ra.value,r[i].vertices.dec.value, color = 'k',zorder = 0.1,alpha = 0.3)
-for i in range(5):
-    ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = '#ff7f0e',zorder = 0.1,alpha = 0.7)
 
+ax[0].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
 
-# ax[0] = plt.subplot(projection=wcs)
-im0 = ax[0].imshow(brg_d, cmap='Greys', origin='lower')
-# ax[0].scatter(gns_all[:,0],gns_all[:,1], alpha = alp,zorder =0.2)
-sc = ax[0].scatter(all_to_kpix[0],all_to_kpix[1], alpha = alp,zorder =0.2)
-
-ax[1].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
-
-ax[0].axis('scaled')
-# ax[0].scatter(gns_young_all[:,0],gns_young_all[:,1], c = colorines,s = sizs,
-#               edgecolor = 'k')
-ax[0].scatter(young_to_kpix[0],young_to_kpix[1], c = colorines,s = sizs,
-              edgecolor = 'k')
-ax[1].scatter(gns_young_all[:,9],gns_young_all[:,11],c = colorines,s = sizs, 
-              alpha = 1,lw =1 , edgecolor = 'k',)
-ax[1].scatter(gns_young_all[0,9],gns_young_all[0,11],facecolor = 'none',s = 200, 
-              lw =1 , edgecolor = 'k',alpha = 0,
+# ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(defa_colors)[bri],s = 60, 
+#               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
+ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(colorines)[bri],s = y_size, 
+              alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
+ax[0].scatter(gns_young_all[0,9],gns_young_all[0,11],facecolor = 'none',s = y_size, 
+              lw =1 , edgecolor = 'k',alpha = 0,marker = '^',
               label = '$\sigma \mu_{ra} = %.2f$\n$\sigma \mu_{dec}$ = %.2f'%(s_brig_ra,s_brig_dec))
 
-ax[1].axis('scaled')
-ax[2].scatter(gns_all[:,3]-gns_all[:,4],gns_all[:,4], alpha = alp)
-ax[2].scatter(gns_young_all[:,3]-gns_young_all[:,4],gns_young_all[:,4],
-              edgecolor = 'k',c = colorines,s = sizs)
-for t in range(len(gns_young_all[:,3])):
-    ax[2].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
-                  '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
+ax[0].axis('scaled')
+ax[1].scatter(gns_all[:,3]-gns_all[:,4],gns_all[:,4], alpha = alp)
+ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4][bri],
+              edgecolor = 'k',c =np.array(colorines)[bri],s = y_size + 40,marker = '^')
+ls_young = []
+# for t in range(len(gns_young_all[:,3])):
+for t in range(len(bri[0])):
+    # ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
+    #               '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
+    #               fontsize = 12,)
+    if t>1 and t%2 >0:
+        plus = -1
+    else:
+        plus = 0
+    ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3 + plus,gns_young_all[t,4],
+                  'Y%s'%(t+1), 
                   fontsize = 12,)
     if gns_young_all[t,4] < mag_lim:
-        print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3])
-ax[2].invert_yaxis()
-ax[2].axvline(1.3, color = 'grey', ls = 'dashed', alpha = 0.5)
-ax[2].axvline(1.9, color = 'grey', ls = 'dashed', alpha = 0.5)
-ax[2].axhline(mag_lim, color = 'grey', ls = 'dashed', alpha = 0.5)
+        print('---- %s'%(t%2))
+        print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3],gns_young_all[t,4])
+        ls_young.append((gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3],gns_young_all[t,4]))
+np.savetxt(pruebas + 'ls_young.txt', np.array(ls_young), fmt = '%.0f '*4 + '%.2f ',header = 'ifu, half, x, y, Ks')
+alp_lines = 0.5
+ax[1].invert_yaxis()
+ax[1].axvline(1.3, color = 'grey', ls = 'dashed', alpha = alp_lines)
+# ax[1].axvline(1.9, color = 'grey', ls = 'dashed', alpha =alp_lines)
+ax[1].axhline(mag_lim, color = 'grey', ls = 'dashed', alpha = alp_lines)
 
-ax[2].axis('scaled')
-ax[2].set_xlim(0,5)
+ax[1].axis('scaled')
+ax[1].set_xlim(0.5,5)
+# ax[1].axis('scaled')
 
 
-ax[0].yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
-ax[0].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = 12,labelpad=-2)
+ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',labelpad=-10,fontsize = 12)
+ax[1].set_ylabel('Ks',fontsize = 12)
+ax[1].set_xlabel('H$-$Ks',fontsize = 12)
 
-ax[0].set_xlabel('RA (º)')
-ax[0].set_ylabel('Dec (º)')
-ax[1].set_xlabel('$\mu_{l}$ (mas/yr)')
-ax[1].set_ylabel('$\mu_{b}$ (mas/yr)',labelpad=-10)
-ax[2].set_ylabel('Ks')
-ax[2].set_xlabel('H$-$Ks')
-
-ax[1].scatter(gns_all[0,9],gns_all[0,11], alpha = 0, color= '#1f77b4',
+ax[0].scatter(gns_all[0,9],gns_all[0,11], alpha = 0, color= '#1f77b4',
               label = '$\sigma \mu_{ra} = %.2f$\n$\sigma \mu_{dec}$ = %.2f'%(s_all_ra,s_all_dec))
-ax[2].scatter(gns_young[0,3]-gns_young[:,4],gns_young[:,4],alpha = 0,s =200,
+ax[1].scatter(gns_young[0,3]-gns_young[:,4],gns_young[:,4],alpha = 0,s =y_size,marker = '^',
               facecolor= 'none', edgecolor = 'k',
               label = '$\overline{H-Ks}$ = %.2f\n$\sigma$ = %.2f'%(brig_color,s_brig_color))
-ax[2].scatter(gns_all[0,3]-gns_all[0,4],gns_all[0,4],alpha = 0,color =  '#1f77b4',
+ax[1].scatter(gns_all[0,3]-gns_all[0,4],gns_all[0,4],alpha = 0,color =  '#1f77b4',
               label = '$\overline{H-Ks}$ = %.2f\n$\sigma$ = %.2f'%(all_color,s_all_color))
 
+ax[0].invert_xaxis()
+leg_siz = 8
+leg0 = ax[0].legend(fontsize = leg_siz +2, loc =1) 
+leg1 = ax[1].legend(fontsize = leg_siz) 
 
-leg1 = ax[1].legend(fontsize = 15) 
-
+for lh in leg0.legend_handles: 
+    lh.set_alpha(1)
 for lh in leg1.legend_handles: 
     lh.set_alpha(1)
+# ax[0].legend()
+# ax[1].legend()
+l_size = 10
+ax[0].tick_params(length=4, width=0.5)
+ax[1].tick_params(length=4, width=0.5)
+ax[0].xaxis.set_tick_params(labelsize=l_size )
+ax[0].yaxis.set_tick_params(labelsize=l_size )
+ax[1].xaxis.set_tick_params(labelsize=l_size )
+ax[1].yaxis.set_tick_params(labelsize=l_size )
+plt.savefig(pruebas + 'pm_color_young.png', dpi =300, bbox_inches = 'tight')
+# 
 
-
-# Add a slider for vmin
-v_min =np.nanmin(brg_d)
-v_max =np.nanmax(brg_d)
-ax_vmin = plt.axes([0.2, 0.1, 0.3, 0.03], facecolor='lightgoldenrodyellow')
-vmin_slider = Slider(ax_vmin, 'vmin', v_min, v_max, valinit=v_min)
-
-# Add a slider for vmax
-ax_vmax = plt.axes([0.2, 0.05, 0.3, 0.03], facecolor='lightgoldenrodyellow')
-vmax_slider = Slider(ax_vmax, 'vmax', v_min, v_max, valinit=v_max)
-
-def update(val):
-    vmin = vmin_slider.val
-    vmax = vmax_slider.val
-    im0.set_clim(vmin, vmax)
-    plt.draw()
-    
-vmin_slider.on_changed(update)
-vmax_slider.on_changed(update)
-
+# sys.exit(236)
 # fig.colorbar(im0, ax=ax[0], orientation='vertical')
+# %%
+fig, ax = plt.subplots(figsize =(8,8))
+ax.scatter(all_to_kpix[0], all_to_kpix[1])
+ax.axis('scaled')
+
 # %%
 lib_pruebas = '/Users/amartinez/Desktop/PhD/Libralato_data/pruebas/'
 # Ra_cl, Dec_cl, mura_cl,mudec_cl, H, Ks
@@ -364,9 +366,8 @@ fig, ax = plt.subplots(2,1,subplot_kw={'projection': mapa}, figsize = (12,12))  
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
 
 
-for i in range(11):
-    ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
-
+# for i in range(11):
+#     ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
 
 
 lon = ax[0].coords[0]
@@ -378,7 +379,7 @@ lon.set_ticks(spacing=5. * u.arcsec)
 lat.set_ticks(spacing=7. * u.arcsec)
 lon1.set_ticks(spacing=5. * u.arcsec)
 lat1.set_ticks(spacing=7. * u.arcsec)
-ax[0].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
+ax[0].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True, fontsize = 20)
 ax[1].tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
 
 ax[1].imshow(brg_data, vmin=-0.8e-20, vmax=0.3e-17, origin='lower', cmap='Greys', label ='KMOS')
@@ -389,18 +390,20 @@ ax[1].scatter(young_to_kpix[0][bri],young_to_kpix[1][bri],  c = np.array(colorin
               edgecolor = 'k')
 
 # ax[0].grid()
-
+l_size = 20
 lon.set_ticks_visible(True)
 lon.set_ticklabel_visible(False)
 # lat.set_ticklabel_visible(True)
 # lat1.set_ticklabel_visible(False)
 # lat1.set_ticks_visible(False)
-lat.set_ticklabel(rotation='vertical')
-lat1.set_ticklabel(rotation='vertical')
-ax[0].coords[0].set_axislabel('RA')
-ax[0].coords[1].set_axislabel('Dec')
-ax[1].coords[0].set_axislabel('RA')
-ax[1].coords[1].set_axislabel('Dec ')
+lat.set_ticklabel(rotation='vertical', fontsize = l_size)
+lat1.set_ticklabel(rotation='vertical',fontsize = l_size)
+lon1.set_ticklabel(fontsize = l_size)
+
+ax[0].coords[0].set_axislabel('RA',fontsize = l_size)
+ax[0].coords[1].set_axislabel('Dec',fontsize = l_size)
+ax[1].coords[0].set_axislabel('RA',fontsize = l_size)
+ax[1].coords[1].set_axislabel('Dec ',fontsize = l_size)
 
 xticks = ax[0].get_xticks()
 yticks = ax[0].get_yticks()
@@ -410,7 +413,12 @@ print("Y-axis tick locations:", yticks)
 ax[0].tick_params(length=4, width=0.5)
 ax[1].tick_params(length=4, width=0.5)
 
-# plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
+ax[0].xaxis.set_tick_params(labelsize=15)
+ax[0].yaxis.set_tick_params(labelsize=15)
+ax[1].xaxis.set_tick_params(labelsize=15)
+ax[1].yaxis.set_tick_params(labelsize=15)
+
+plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # =============================================================================
 # # Add a slider for vmin
@@ -432,3 +440,44 @@ ax[1].tick_params(length=4, width=0.5)
 # vmin_slider.on_changed(update)
 # vmax_slider.on_changed(update)
 # =============================================================================
+# %%
+ls_y = np.array(ls_young)
+gns_all_but = gns_all
+for y in ls_y:
+    mag = y[4]
+    # print(mag)
+    equal_mag = np.where(gns_all[:,4] == mag)
+    # print(equal_mag[0])
+    gns_all_but = np.delete(gns_all_but, equal_mag[0], axis = 0) 
+    # print(len(gns_all),len(gns_all_but))
+    #rint(close_mag)
+
+# %
+late_type = []
+for y in ls_y:
+    mag = y[4]
+    print('----')
+    print(mag, y[0],y[1])
+    close_mag = np.where(abs(gns_all_but[:,4]-mag) == min(abs(gns_all_but[:,4]-mag)))
+    # print(min(abs(gns_all_but[:,4]-mag)))
+    if min(abs(gns_all_but[:,4]-mag)) == 0:
+        gns_all_but = np.delete(gns_all_but, close_mag[0], axis = 0) 
+        close_mag = np.where(abs(gns_all_but[:,4]-mag) == min(abs(gns_all_but[:,4]-mag)))   
+        # print('∫∫∫∫')
+        # print(min(abs(gns_all_but[:,4]-mag)), close_mag)
+        # print('∫∫∫∫')
+    print(gns_all_but[close_mag][0][4],gns_all_but[close_mag][0][-2],gns_all_but[close_mag][0][-1])
+    print('****')
+    late_type.append((gns_all_but[close_mag][0][-2],gns_all_but[close_mag][0][-1],gns_all_but[close_mag][0][4]))
+np.savetxt(pruebas + 'late_type_for_comparation.txt', np.array(late_type), fmt = 2*'%.0f ' + '%.8f',header = 'ifu, half, Ks')
+
+
+
+
+
+
+
+
+
+
+
