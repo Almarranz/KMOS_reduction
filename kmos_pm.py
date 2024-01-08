@@ -43,6 +43,7 @@ from astropy.stats import sigma_clip
 from matplotlib.ticker import FormatStrFormatter
 from regions import Regions
 from astropy.utils.data import get_pkg_data_filename
+import pandas as pd
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -333,10 +334,39 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-# sys.exit(343)
+sys.exit(343)
 # ax.
+# %%
+# Create a latex table
+df = pd.DataFrame({'ID':[],
+                   'RA(º)':[],
+                   'Dec(º)':[], 
+                   '$\mu_{RA}$(mas/yr)':[],
+                   '$\mu_{Dec}$(mas/yr)':[],
+                   'H':[],
+                   'Ks':[]})
+ID_ls = ['Y%.0f'%(k+1) for k in range(len(bri[0]))]
+df['ID'] = ID_ls
+df['RA(º)'] = ['%.3f'%(gns_young_all[bri][i,0]) for i in range(len(bri[0]))]
+df['Dec(º)'] = ['%.3f'%(gns_young_all[bri][i,1]) for i in range(len(bri[0]))]
 
 
+# 0RA_gns 	1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation
+ls_mura = ['%.02f$\pm$%.02f'%(gns_young_all[bri][i,9],gns_young_all[bri][i,10]) for i in range(len(bri[0]))]
+ls_mudec = ['%.02f$\pm$%.02f'%(gns_young_all[bri][i,11],gns_young_all[bri][i,12]) for i in range(len(bri[0]))]
+ls_H = ['%.02f'%(gns_young_all[bri][i,3]) for i in range(len(bri[0]))]
+ls_Ks = ['%.02f'%(gns_young_all[bri][i,4]) for i in range(len(bri[0]))]
+
+
+
+df['$\mu_{RA}$(mas/yr)'] = ls_mura
+df['$\mu_{Dec}$(mas/yr)'] = ls_mudec
+df['H'] = ls_H
+df['Ks'] = ls_Ks
+
+
+print(df.to_latex(index = False, column_format = 'c'*len(df.columns), label = 'tab:ysos', 
+                  caption = 'YSO parametres. Uncertainties in the propermotions as they appear in LIB21'))
 # %%
 
 # # Enable automatic plotting mode
@@ -441,6 +471,7 @@ plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
 # vmax_slider.on_changed(update)
 # =============================================================================
 # %%
+# Find late typ stars with similar magnitudes of those of the YSO
 ls_y = np.array(ls_young)
 gns_all_but = gns_all
 for y in ls_y:
