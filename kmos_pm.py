@@ -44,6 +44,8 @@ from matplotlib.ticker import FormatStrFormatter
 from regions import Regions
 from astropy.utils.data import get_pkg_data_filename
 import pandas as pd
+
+from matplotlib.patches import Rectangle
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -70,8 +72,8 @@ rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 
 # Enable automatic plotting mode
-IPython.get_ipython().run_line_magic('matplotlib', 'auto')
-# IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+# IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 # %%
 
 ifu_sel = np.arange(1,25)
@@ -136,6 +138,9 @@ bri = np.where(gns_young_all[:,4] < mag_lim)
 young_good = gns_young_all[bri]
 s_brig_ra = np.std(young_good[:,9])
 s_brig_dec = np.std(young_good[:,11])
+m_brig_ra = np.mean(young_good[:,9])
+m_brig_dec = np.mean(young_good[:,11])
+
 s_brig = np.std(np.sqrt(young_good[:,9]**2 + young_good[:,11]**2))
 brig_color, s_brig_color = np.nanmean(young_good[:,3] - young_good[:,4]), np.nanstd(young_good[:,3] - young_good[:,4])
 
@@ -152,6 +157,8 @@ gns_all = gns_all[all_pm_sig.mask==False]
 
 s_all_ra = np.std(gns_all[:,9])
 s_all_dec = np.std(gns_all[:,11])
+m_all_ra = np.mean(gns_all[:,9])
+m_all_dec = np.mean(gns_all[:,11])
 all_color, s_all_color = np.nanmean(gns_all[:,3]-gns_all[:,4]), np.nanstd(gns_all[:,3]-gns_all[:,4])
 
 
@@ -199,7 +206,7 @@ ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(colo
               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
 ax[0].scatter(gns_young_all[0,9],gns_young_all[0,11],facecolor = 'none',s = y_size, 
               lw =1 , edgecolor = 'k',alpha = 0,marker = '^',
-              label = '$\sigma \mu_{ra} = %.2f$\n$\sigma \mu_{dec}$ = %.2f'%(s_brig_ra,s_brig_dec))
+              label = '$\overline{\mu}_{ra} = %.2f$, $\overline{\mu}_{dec} = %.2f$\n$\sigma \mu_{ra} = %.2f$, $\sigma \mu_{dec}$ = %.2f'%(m_brig_ra,m_brig_dec,s_brig_ra,s_brig_dec))
 
 ax[0].axis('scaled')
 ax[1].scatter(gns_all[:,3]-gns_all[:,4],gns_all[:,4], alpha = alp)
@@ -238,9 +245,10 @@ ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = 12,labelpad=-2)
 ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',labelpad=-10,fontsize = 12)
 ax[1].set_ylabel('Ks',fontsize = 12)
 ax[1].set_xlabel('H$-$Ks',fontsize = 12)
+             
 
 ax[0].scatter(gns_all[0,9],gns_all[0,11], alpha = 0, color= '#1f77b4',
-              label = '$\sigma \mu_{ra} = %.2f$\n$\sigma \mu_{dec}$ = %.2f'%(s_all_ra,s_all_dec))
+              label = '$\overline{\mu}_{ra} = %.2f$, $\overline{\mu}_{dec} = %.2f$\n$\sigma \mu_{ra} = %.2f$, $\sigma \mu_{dec}$ = %.2f'%(m_all_ra,m_all_dec,s_all_ra,s_all_dec))
 ax[1].scatter(gns_young[0,3]-gns_young[:,4],gns_young[:,4],alpha = 0,s =y_size,marker = '^',
               facecolor= 'none', edgecolor = 'k',
               label = '$\overline{H-Ks}$ = %.2f\n$\sigma$ = %.2f'%(brig_color,s_brig_color))
@@ -334,7 +342,7 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-sys.exit(343)
+# sys.exit(343)
 # ax.
 # %%
 # Create a latex table
@@ -389,13 +397,16 @@ mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
 
 
-fig, ax = plt.subplots(2,1,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
+fig, ax = plt.subplots(1,2,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
 
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
+r_ifu=  Regions.read(pruebas + 'ifu_half.reg',format='ds9')
 
-
+ax[0].add_patch(Rectangle((r_ifu[0].center.x-r_ifu[0].width/2
+                           ,r_ifu[0].center.y-r_ifu[0].height/2+2), 
+                          r_ifu[0].width, r_ifu[0].height, fill = False,lw = 3))
 # for i in range(11):
 #     ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
 
@@ -500,11 +511,141 @@ for y in ls_y:
     print(gns_all_but[close_mag][0][4],gns_all_but[close_mag][0][-2],gns_all_but[close_mag][0][-1])
     print('****')
     late_type.append((gns_all_but[close_mag][0][-2],gns_all_but[close_mag][0][-1],gns_all_but[close_mag][0][4]))
-np.savetxt(pruebas + 'late_type_for_comparation.txt', np.array(late_type), fmt = 2*'%.0f ' + '%.8f',header = 'ifu, half, Ks')
+# np.savetxt(pruebas + 'late_type_for_comparation.txt', np.array(late_type), fmt = 2*'%.0f ' + '%.8f',header = 'ifu, half, Ks')
+
+# %%
+# Calculate the probability of a group of stars to be young and hava similar 
+# velocities just by chance
+gns_stat_all = []
+gns_all_bri = []
+bri_all = np.where(gns_all[:,4] < mag_lim)
+gns_all_bri = gns_all[bri_all]
+
+gns_all_bri = np.c_[gns_all_bri, np.repeat(0,len(gns_all_bri))]
+young_good_age = np.c_[young_good, np.repeat(1,len(young_good))]
+
+gns_stat_all = np.r_[gns_all_bri,young_good_age]
+
+pm_age_bri = gns_stat_all[:,[9,11,27]]
+
+
+yv = []
+def dispersion(data):
+    y_ra_dis = np.std(data[data[:,2]==1][:,0])
+    y_dec_dis = np.std(data[data[:,2]==1][:,1])
+    y_v_dis = np.std(np.sqrt(data[data[:,2]==1][:,0]**2 +data[data[:,2]==1][:,1]**2))
+    l_ra_dis = np.std(data[data[:,2]==0][:,0])
+    l_dec_dis = np.std(data[data[:,2]==0][:,1])
+    l_v_dis = np.std(np.sqrt(data[data[:,2]==0][:,0]**2 +data[data[:,2]==0][:,1]**2))
+    return y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis
+
+y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis= dispersion(pm_age_bri)    
+
+def rand_test(data, n_per = 10000):
+    y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis = dispersion(data)
+    diff_obs_ra = abs(y_ra_dis-l_ra_dis)
+    diff_obs_dec = abs(y_dec_dis-l_dec_dis)
+    diff_obs_v = abs(y_v_dis-l_v_dis)
+    print(diff_obs_ra,diff_obs_dec, diff_obs_v)
+    mura, mudec, muv = data[:,0], data[:,1], np.sqrt(data[:,0]**2 + data[:,1]**2)
+    diff_sim_ra = np.empty(n_per)
+    diff_sim_dec = np.empty(n_per)
+    diff_sim_v = np.empty(n_per)
+    for i in range(n_per):
+        np.random.shuffle(mura)
+        np.random.shuffle(mudec)
+        np.random.shuffle(muv)
+        diff_sim_ra[i] = abs(np.std(mura[-7:])-np.std(mura[:-7]))
+        diff_sim_dec[i] = abs(np.std(mudec[-7:])-np.std(mudec[:-7]))
+        diff_sim_v[i] = abs(np.std(muv[-7:])-np.std(muv[:-7]))
+        yv.append(np.std(muv[:-7]))
+    
+    p_sta_ra = np.sum(diff_sim_ra>diff_obs_ra)/n_per    
+    p_sta_dec = np.sum(diff_sim_dec>diff_obs_dec)/n_per 
+    p_sta_v = np.sum(diff_sim_v>diff_obs_v)/n_per 
+    return diff_sim_ra,diff_sim_dec,diff_sim_v, p_sta_ra, p_sta_dec, p_sta_v
+        
+        
+
+diff_sim_ra,diff_sim_dec,diff_sim_v, p_sta_ra, p_sta_dec, p_sta_v = rand_test(pm_age_bri)
+print( p_sta_ra, p_sta_dec, p_sta_v)
+
+# %%
+fig, ax = plt.subplots(1,1, figsize = (4,4))
+ax.hist(diff_sim_v,histtype = 'step', lw = 2, label = 'Simulated')
+ax.axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
+ax.set_xlabel('$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$ (mas/yr)', fontsize = 12)
+ax.set_ylabel('# of simulations',fontsize = 12)
+ax.legend()
+plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
+# ax.hist(yv,histtype = 'step')
+# # ax.axvline(1.98)
+
+# %%
+data_star = gns_stat_all[:,[9,11,27]]
 
 
 
+import numpy as np
+from scipy.stats import ttest_ind
 
+def calculate_dispersion(data):
+    """
+    Calculate the dispersion (standard deviation) of velocities in each group.
+    """
+    young_velocities = data[data[:, 2] == 1][:, 0:2]
+    old_velocities = data[data[:, 2] == 0][:, 0:2]
+
+    young_dispersion = np.std(young_velocities, axis=0).mean()
+    old_dispersion = np.std(old_velocities, axis=0).mean()
+
+    return young_dispersion, old_dispersion
+yd,od = calculate_dispersion(data_star)
+# %
+def permutation_test(data, num_permutations=10000):
+    """
+    Perform a permutation test to compare the dispersion of velocities between young and old groups.
+    """
+    observed_young_dispersion, observed_old_dispersion = calculate_dispersion(data)
+    observed_difference = abs(observed_young_dispersion - observed_old_dispersion)
+
+    # Combine velocities for permutation
+    all_velocities = data[:, 0:2]
+
+    # Initialize an array to store permuted differences
+    permuted_differences = np.zeros(num_permutations)
+
+    for i in range(num_permutations):
+        # Randomly shuffle velocities between young and old
+        np.random.shuffle(all_velocities)
+
+        # Recalculate dispersion for permuted data
+        permuted_young_dispersion, permuted_old_dispersion = calculate_dispersion(np.column_stack((all_velocities, data[:, 2])))
+
+        # Store the absolute difference
+        permuted_differences[i] = abs(permuted_young_dispersion - permuted_old_dispersion)
+        # permuted_differences[i] = (permuted_young_dispersion - permuted_old_dispersion)
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_differences >= observed_difference) / num_permutations
+
+    return p_value, permuted_differences
+
+# Assuming your data is stored in a NumPy array named 'star_data'
+# Columns: ID, Velocity_X, Velocity_Y, Age
+# Age: 'young' or 'old'   
+
+# Perform the permutation test
+p_value, p_diff = permutation_test(data_star)
+yd,od = calculate_dispersion(data_star)
+
+# Print the result
+print(f"P-value for the permutation test: {p_value}")
+
+# %%
+fig, ax = plt.subplots(1,1)
+ax.hist(p_diff)
+ax.axvline(2.1)
 
 
 
