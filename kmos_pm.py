@@ -190,7 +190,7 @@ del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_
 wcs = WCS(brg_h)
 # wcs = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
-fig, ax = plt.subplots(2,1, figsize = (5,10))
+fig, ax = plt.subplots(1,3, figsize = (15,5))
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
@@ -200,7 +200,7 @@ all_to_kpix = wcs.wcs_world2pix(gns_all[:,0],gns_all[:,1],1)
 
 ax[0].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
 
-# ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(defa_colors)[bri],s = 60, 
+# ax[0].scatter(gns_young_all[:,9],gns_young_all[:,11],s = 60, 
 #               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
 ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(colorines)[bri],s = y_size, 
               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
@@ -269,14 +269,88 @@ for lh in leg1.legend_handles:
 l_size = 10
 ax[0].tick_params(length=4, width=0.5)
 ax[1].tick_params(length=4, width=0.5)
+ax[2].tick_params(length=4, width=0.5)
 ax[0].xaxis.set_tick_params(labelsize=l_size )
 ax[0].yaxis.set_tick_params(labelsize=l_size )
 ax[1].xaxis.set_tick_params(labelsize=l_size )
 ax[1].yaxis.set_tick_params(labelsize=l_size )
-plt.savefig(pruebas + 'pm_color_young.png', dpi =300, bbox_inches = 'tight')
+ax[2].xaxis.set_tick_params(labelsize=l_size )
+ax[2].yaxis.set_tick_params(labelsize=l_size )
+
+# %
+# Calculate the probability of a group of stars to be young and hava similar 
+# velocities just by chance
+gns_stat_all = []
+gns_all_bri = []
+bri_all = np.where(gns_all[:,4] < mag_lim)
+gns_all_bri = gns_all[bri_all]
+
+gns_all_bri = np.c_[gns_all_bri, np.repeat(0,len(gns_all_bri))]
+young_good_age = np.c_[young_good, np.repeat(1,len(young_good))]
+
+gns_stat_all = np.r_[gns_all_bri,young_good_age]
+
+pm_age_bri = gns_stat_all[:,[9,11,27]]
+
+
+yv = []
+def dispersion(data):
+    y_ra_dis = np.std(data[data[:,2]==1][:,0])
+    y_dec_dis = np.std(data[data[:,2]==1][:,1])
+    y_v_dis = np.std(np.sqrt(data[data[:,2]==1][:,0]**2 +data[data[:,2]==1][:,1]**2))
+    l_ra_dis = np.std(data[data[:,2]==0][:,0])
+    l_dec_dis = np.std(data[data[:,2]==0][:,1])
+    l_v_dis = np.std(np.sqrt(data[data[:,2]==0][:,0]**2 +data[data[:,2]==0][:,1]**2))
+    return y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis
+
+y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis= dispersion(pm_age_bri)    
+
+def rand_test(data, n_per = 20000):
+    y_ra_dis, y_dec_dis, l_ra_dis, l_dec_dis,y_v_dis,l_v_dis = dispersion(data)
+    diff_obs_ra = abs(y_ra_dis-l_ra_dis)
+    diff_obs_dec = abs(y_dec_dis-l_dec_dis)
+    diff_obs_v = abs(y_v_dis-l_v_dis)
+    print(diff_obs_ra,diff_obs_dec, diff_obs_v)
+    mura, mudec, muv = data[:,0], data[:,1], np.sqrt(data[:,0]**2 + data[:,1]**2)
+    diff_sim_ra = np.empty(n_per)
+    diff_sim_dec = np.empty(n_per)
+    diff_sim_v = np.empty(n_per)
+    for i in range(n_per):
+        np.random.shuffle(mura)
+        np.random.shuffle(mudec)
+        np.random.shuffle(muv)
+        diff_sim_ra[i] = abs(np.std(mura[-7:])-np.std(mura[:-7]))
+        diff_sim_dec[i] = abs(np.std(mudec[-7:])-np.std(mudec[:-7]))
+        diff_sim_v[i] = abs(np.std(muv[-7:])-np.std(muv[:-7]))
+        yv.append(np.std(muv[:-7]))
+    
+    p_sta_ra = np.sum(diff_sim_ra>diff_obs_ra)/n_per    
+    p_sta_dec = np.sum(diff_sim_dec>diff_obs_dec)/n_per 
+    p_sta_v = np.sum(diff_sim_v>diff_obs_v)/n_per 
+    return diff_sim_ra,diff_sim_dec,diff_sim_v, p_sta_ra, p_sta_dec, p_sta_v
+        
+        
+
+diff_sim_ra,diff_sim_dec,diff_sim_v, p_sta_ra, p_sta_dec, p_sta_v = rand_test(pm_age_bri)
+print( p_sta_ra, p_sta_dec, p_sta_v)
+
+# %%
+# fig, ax = plt.subplots(1,1, figsize = (4,4))
+ax[2].hist(diff_sim_v,histtype = 'step', lw = 2, label = 'Simulated')
+ax[2].axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
+ax[2].set_xlabel('$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$ (mas/yr)', fontsize = 12)
+ax[2].set_ylabel('# of simulations',fontsize = 12)
+ax[2].legend()
+
+# plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
+# ax.hist(yv,histtype = 'step')
+# # ax.axvline(1.98)
+
+
+# plt.savefig(pruebas + 'pm_color_young.png', dpi =300, bbox_inches = 'tight')
 # 
 
-# sys.exit(236)
+sys.exit(350)
 # fig.colorbar(im0, ax=ax[0], orientation='vertical')
 # %%
 fig, ax = plt.subplots(figsize =(8,8))
@@ -397,7 +471,7 @@ mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
 
 
-fig, ax = plt.subplots(1,2,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
+fig, ax = plt.subplots(2,1,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
 
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
