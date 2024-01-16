@@ -83,3 +83,8 @@ alingment of the whole cube (for a single IFU)
 6. source_finder_in_KMOS.py. Match the indentified stars with spectra in GNS (and Lib)
 
 7. kmos_pm.py. Plots positions, velocites and CMD for the stars with a match with GNS_LIB catalog. 
+Also makes latex table of the YSO and random simulations to compare with the real data.
+
+8. SNR.py. Calculate the SNR of the selected YSO stars in kmos_pm.py
+
+9. young_spect_plot.py. Plots the spectra of the selected YSO.
