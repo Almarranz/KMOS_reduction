@@ -190,7 +190,8 @@ del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_
 wcs = WCS(brg_h)
 # wcs = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
-fig, ax = plt.subplots(1,3, figsize = (15,5))
+fig, ax = plt.subplots(1,3, figsize = (12,4))
+# fig, ax = plt.subplots(1,3)
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
@@ -200,49 +201,68 @@ all_to_kpix = wcs.wcs_world2pix(gns_all[:,0],gns_all[:,1],1)
 
 ax[0].scatter(gns_all[:,9],gns_all[:,11], alpha = alp)
 
-# ax[0].scatter(gns_young_all[:,9],gns_young_all[:,11],s = 60, 
-#               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
+
 ax[0].scatter(gns_young_all[:,9][bri],gns_young_all[:,11][bri],c = np.array(colorines)[bri],s = y_size, 
               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
+# ax[0].scatter(gns_young_all[:,9],gns_young_all[:,11],c = np.array(colorines),s = y_size, 
+#               alpha = 1,lw =1 , edgecolor = 'k',marker = '^',)
 ax[0].scatter(gns_young_all[0,9],gns_young_all[0,11],facecolor = 'none',s = y_size, 
               lw =1 , edgecolor = 'k',alpha = 0,marker = '^',
               label = '$\overline{\mu}_{ra} = %.2f$, $\overline{\mu}_{dec} = %.2f$\n$\sigma \mu_{ra} = %.2f$, $\sigma \mu_{dec}$ = %.2f'%(m_brig_ra,m_brig_dec,s_brig_ra,s_brig_dec))
+
+
+
 
 ax[0].axis('scaled')
 ax[1].scatter(gns_all[:,3]-gns_all[:,4],gns_all[:,4], alpha = alp)
 ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4][bri],
               edgecolor = 'k',c =np.array(colorines)[bri],s = y_size + 40,marker = '^')
+# Plot isochrone
+# At the end of the script there is some line to build ischrones.
+# In order to make it work, you must activate the base conda enviroment
+# =============================================================================
+# age = np.log10(2.5e6) 
+# AKs = 1.60
+# iso = fits.open('/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/iso_%.2f_%.2f_08200_p00.fits'%(age, AKs))
+# good_Ks = np.where(iso[1].data['m_hawki_Ks']<max(gns_all[:,4]  ))
+# ax[1].plot(iso[1].data['m_hawki_H'][good_Ks]-iso[1].data['m_hawki_Ks'][good_Ks],iso[1].data['m_hawki_Ks'][good_Ks])
+# =============================================================================
+
+
+# ax[1].scatter(gns_young_all[:,3]-gns_young_all[:,4],gns_young_all[:,4],
+#               edgecolor = 'k',c =np.array(colorines),s = y_size + 40,marker = '^')
 ls_young = []
 # for t in range(len(gns_young_all[:,3])):
 for t in range(len(bri[0])):
-    # ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
-    #               '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
-    #               fontsize = 12,)
+    ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
+                  '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
+                  fontsize = 12,)
     if t>1 and t%2 >0:
         plus = -1
     else:
         plus = 0
-    ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3 + plus,gns_young_all[t,4],
-                  'Y%s'%(t+1), 
-                  fontsize = 12,)
+    # ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3 + plus,gns_young_all[t,4],
+    #               'Y%s'%(t+1), 
+    #               fontsize = 12,)
     if gns_young_all[t,4] < mag_lim:
         print('---- %s'%(t%2))
         print(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3],gns_young_all[t,4])
         ls_young.append((gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3],gns_young_all[t,4]))
-np.savetxt(pruebas + 'ls_young.txt', np.array(ls_young), fmt = '%.0f '*4 + '%.2f ',header = 'ifu, half, x, y, Ks')
+# np.savetxt(pruebas + 'ls_young.txt', np.array(ls_young), fmt = '%.0f '*4 + '%.2f ',header = 'ifu, half, x, y, Ks')
 alp_lines = 0.5
-ax[1].invert_yaxis()
+
 ax[1].axvline(1.3, color = 'grey', ls = 'dashed', alpha = alp_lines)
 # ax[1].axvline(1.9, color = 'grey', ls = 'dashed', alpha =alp_lines)
 ax[1].axhline(mag_lim, color = 'grey', ls = 'dashed', alpha = alp_lines)
-
+ax[1].invert_yaxis()
+ax[1].set_ylim(16,10)
 ax[1].axis('scaled')
 ax[1].set_xlim(0.5,5)
 # ax[1].axis('scaled')
 
 
-ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = 12,labelpad=-2)
-ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',labelpad=-10,fontsize = 12)
+ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = 12)
+ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',fontsize = 12)
 ax[1].set_ylabel('Ks',fontsize = 12)
 ax[1].set_xlabel('H$-$Ks',fontsize = 12)
              
@@ -338,7 +358,7 @@ print( p_sta_ra, p_sta_dec, p_sta_v)
 # fig, ax = plt.subplots(1,1, figsize = (4,4))
 ax[2].hist(diff_sim_v,histtype = 'step', lw = 2, label = 'Simulated')
 ax[2].axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
-ax[2].set_xlabel('$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$ (mas/yr)', fontsize = 12)
+ax[2].set_xlabel('|$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$|(mas/yr)', fontsize = 12)
 ax[2].set_ylabel('# of simulations',fontsize = 12)
 ax[2].legend()
 
@@ -350,7 +370,7 @@ ax[2].legend()
 # plt.savefig(pruebas + 'pm_color_young.png', dpi =300, bbox_inches = 'tight')
 # 
 
-sys.exit(350)
+# sys.exit(357)
 # fig.colorbar(im0, ax=ax[0], orientation='vertical')
 # %%
 fig, ax = plt.subplots(figsize =(8,8))
@@ -363,18 +383,24 @@ lib_pruebas = '/Users/amartinez/Desktop/PhD/Libralato_data/pruebas/'
 Ra_cl, Dec_cl, mura_cl,mudec_cl, H_cl, Ks_cl,ms_id= np.loadtxt(lib_pruebas + 'clus_14996_16_55.txt', unpack=True)
 # lib_cl= np.loadtxt(lib_pruebas + 'clus_14996_16_55.txt', unpack=True)
 fig, ax = plt.subplots(1,1)
-ax.scatter(gns_young_all[:,0],gns_young_all[:,1],s = sizs, c= colorines)
-ax.scatter(Ra_cl,Dec_cl, marker = 'x')
+brilli = Ks_cl < mag_lim
+# ax.scatter(gns_young_all[:,0],gns_young_all[:,1],s = sizs, c= colorines)
+# ax.scatter(Ra_cl,Dec_cl, marker = 'x')
+ax.scatter(Ra_cl,Dec_cl, marker = 'o', color = 'pink')
+ax.scatter(gns_young_all[:,0][bri],gns_young_all[:,1][bri], c= 'k', s = 5)
+
+clus_to_kpix = wcs.wcs_world2pix(Ra_cl,Dec_cl,1)
+
 # %%
 
 
 fig, ax = plt.subplots(1,2)
-ax[0].scatter(gns_young_all[:,10], gns_young_all[:,12], s = sizs, c = colorines)
+ax[0].scatter(gns_young_all[:,10], gns_young_all[:,12], s = sizs, c = colorines, marker = '^')
 ax[0].set_xlabel('$\sigma \mu_{RA}$(mas/yr)')
 ax[0].set_ylabel('$\sigma \mu_{Dec}$(mas/yr)')
 ax[0].axis('scaled')
 error = np.sqrt(gns_young_all[:,10]**2 + gns_young_all[:,12]**2)
-ax[1].scatter(gns_young_all[:,4], error, s = sizs, c = colorines)
+ax[1].scatter(gns_young_all[:,4], error, s = sizs, c = colorines, marker = '^')
 ax[1].set_ylabel('$\sigma \mu$(mas/yr)')
 ax[1].set_xlabel('Ks')
 ax[1].axis('scaled')
@@ -399,10 +425,17 @@ lon = ax.coords[0]
 lat = ax.coords[1]
 lon.set_ticks(spacing=5. * u.arcsec)
 lat.set_ticks(spacing=5. * u.arcsec)
-ax.tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
-ax.imshow(image_data, vmin=-0.8e-20, vmax=0.3e-17, origin='lower', cmap='Greys', label ='KMOS')
-
-ax.grid()
+ax.tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
+ax.imshow(image_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
+ax.scatter(clus_to_kpix[0][~brilli], clus_to_kpix[1][~brilli],c= '#1f77b4', s =15, label = 'M23 (Ks > %s)'%(mag_lim))
+ax.scatter(clus_to_kpix[0][brilli], clus_to_kpix[1][brilli], facecolor = 'none', edgecolors= '#1f77b4', s = 70,alpha = 1, label = 'M23 (Ks < %s)'%(mag_lim))
+ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], s = 20,marker = '^', label = 'MSO (Ks < 14.5)', color = '#ff7f0e')
+# ax.axhline(430, color ='r')
+ax.legend(fontsize = 8, loc = 3)
+ax.add_patch(Rectangle((0, 440), 650, 400, alpha = 0.5, color = 'k',fill = False, lw =2,ls ='dashed',label = 'ID'))
+ax.invert_xaxis()
+ax.invert_yaxis()
+# ax.grid()
 
 lon.set_ticks_visible(True)
 lon.set_ticklabel_visible(True)
@@ -412,11 +445,14 @@ lon.set_ticklabel_visible(True)
 lat.set_ticklabel(rotation='vertical')
 ax.coords[0].set_axislabel('RA')
 ax.coords[1].set_axislabel('Dec')
+ax.tick_params(length=4, width=0.5)
 xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-# sys.exit(343)
+plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
+# 
+# sys.exit(423)
 # ax.
 # %%
 # Create a latex table
@@ -477,10 +513,20 @@ fig, ax = plt.subplots(2,1,subplot_kw={'projection': mapa}, figsize = (12,12))  
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
 r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
 r_ifu=  Regions.read(pruebas + 'ifu_half.reg',format='ds9')
+r_ifu_w =  Regions.read(pruebas + 'ifu_whole.reg',format='ds9')
+r_ifu_s =  Regions.read(pruebas + 'ifu_single.reg',format='ds9')
 
 ax[0].add_patch(Rectangle((r_ifu[0].center.x-r_ifu[0].width/2
-                           ,r_ifu[0].center.y-r_ifu[0].height/2+2), 
+                           ,r_ifu[0].center.y-r_ifu[0].height/2), 
                           r_ifu[0].width, r_ifu[0].height, fill = False,lw = 3))
+
+ax[0].add_patch((Rectangle((r_ifu_w[0].center.x-r_ifu_w[0].width/2
+                           ,r_ifu_w[0].center.y-r_ifu_w[0].height/2), 
+                          r_ifu_w[0].width, r_ifu_w[0].height, fill = False,lw = 3, ls = 'dashed')))
+
+ax[0].add_patch((Rectangle((r_ifu_s[0].center.x-r_ifu_s[0].width/2
+                           ,r_ifu_s[0].center.y-r_ifu_s[0].height/2), 
+                          r_ifu_s[0].width, r_ifu_s[0].height, fill = False,lw = 3, color = 'red')))
 # for i in range(11):
 #     ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
 
@@ -497,12 +543,12 @@ lat1.set_ticks(spacing=7. * u.arcsec)
 ax[0].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True, fontsize = 20)
 ax[1].tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
 
-ax[1].imshow(brg_data, vmin=-0.8e-20, vmax=0.3e-17, origin='lower', cmap='Greys', label ='KMOS')
+ax[1].imshow(brg_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
 ima1 = ax[0].imshow(im_data, vmin=-0.011e-16, vmax=0.136e-16, origin='lower', cmap='Greys', label ='KMOS')
 ax[0].scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], c = np.array(colorines)[bri],s = sizs[bri]*0.7,
-              edgecolor = 'k')
+              edgecolor = 'k', marker = '^')
 ax[1].scatter(young_to_kpix[0][bri],young_to_kpix[1][bri],  c = np.array(colorines)[bri],s = sizs[bri]*0.7,
-              edgecolor = 'k')
+              edgecolor = 'k', marker = '^')
 
 # ax[0].grid()
 l_size = 20
@@ -533,7 +579,7 @@ ax[0].yaxis.set_tick_params(labelsize=15)
 ax[1].xaxis.set_tick_params(labelsize=15)
 ax[1].yaxis.set_tick_params(labelsize=15)
 
-plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # =============================================================================
 # # Add a slider for vmin
@@ -651,7 +697,7 @@ ax.axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
 ax.set_xlabel('$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$ (mas/yr)', fontsize = 12)
 ax.set_ylabel('# of simulations',fontsize = 12)
 ax.legend()
-plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
 # ax.hist(yv,histtype = 'step')
 # # ax.axvline(1.98)
 
@@ -717,13 +763,47 @@ yd,od = calculate_dispersion(data_star)
 print(f"P-value for the permutation test: {p_value}")
 
 # %%
-fig, ax = plt.subplots(1,1)
-ax.hist(p_diff)
-ax.axvline(2.1)
-
-
-
-
+# =============================================================================
+# # This bit is for making isochrones with SPISEA. You have to swhitch the conda
+# # enviroment to  'base' for it to work
+# import spisea
+# from spisea import synthetic, evolution, atmospheres, reddening, ifmr
+# from spisea.imf import imf, multiplicity
+# 
+# iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
+# 
+# evo_model = evolution.MISTv1() 
+# atm_func = atmospheres.get_merged_atmosphere
+# red_law = reddening.RedLawNoguerasLara18()
+# filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
+# 
+# 
+# metallicity = 0.0
+# logAge = np.log10(0.0025*10**9.)
+# imf_set_ls = 'topheavy'
+# dist = 8200 
+# AKs = 1.73
+# 
+# iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+#                                 evo_model=evo_model, atm_func=atm_func,
+#                                 red_law=red_law, filters=filt_list,
+#                                     iso_dir=iso_dir)
+# imf_set = 'topheavy'
+# imf_multi = multiplicity.MultiplicityUnresolved()
+# massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
+# if imf_set == 'Kroupa':
+#     powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+# elif imf_set == 'topheavy':
+#     powers = np.array([-1.8, -1.8, -1.8]) 
+# my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+# 
+# 
+# fig, ax = plt.subplots(1,1)
+# ax.plot(iso.points['m_hawki_H']-iso.points['m_hawki_Ks'],iso.points['m_hawki_Ks'])
+# ax.invert_yaxis()
+# ax.set_xlim(1.30,4)
+# =============================================================================
+# %%
 
 
 
