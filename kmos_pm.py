@@ -541,7 +541,7 @@ lat.set_ticks(spacing=7. * u.arcsec)
 lon1.set_ticks(spacing=5. * u.arcsec)
 lat1.set_ticks(spacing=7. * u.arcsec)
 ax[0].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True, fontsize = 20)
-ax[1].tick_params(axis = 'y',which = 'both',labelright = True, labelleft = True)
+ax[1].tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
 
 ax[1].imshow(brg_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
 ima1 = ax[0].imshow(im_data, vmin=-0.011e-16, vmax=0.136e-16, origin='lower', cmap='Greys', label ='KMOS')
@@ -579,7 +579,12 @@ ax[0].yaxis.set_tick_params(labelsize=15)
 ax[1].xaxis.set_tick_params(labelsize=15)
 ax[1].yaxis.set_tick_params(labelsize=15)
 
-# plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
+ax[0].invert_xaxis()
+ax[0].invert_yaxis()
+ax[1].invert_xaxis()
+ax[1].invert_yaxis()
+
+plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # =============================================================================
 # # Add a slider for vmin
