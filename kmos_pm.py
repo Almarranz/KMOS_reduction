@@ -450,7 +450,7 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # sys.exit(423)
 # ax.
@@ -584,7 +584,7 @@ ax[0].invert_yaxis()
 ax[1].invert_xaxis()
 ax[1].invert_yaxis()
 
-plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # =============================================================================
 # # Add a slider for vmin
@@ -768,47 +768,189 @@ yd,od = calculate_dispersion(data_star)
 print(f"P-value for the permutation test: {p_value}")
 
 # %%
-# =============================================================================
-# # This bit is for making isochrones with SPISEA. You have to swhitch the conda
-# # enviroment to  'base' for it to work
-# import spisea
-# from spisea import synthetic, evolution, atmospheres, reddening, ifmr
-# from spisea.imf import imf, multiplicity
+# This bit is for making isochrones with SPISEA. You have to swhitch the conda
+# enviroment to  'base' for it to work
+import spisea
+from spisea import synthetic, evolution, atmospheres, reddening, ifmr
+from spisea.imf import imf, multiplicity
+
+iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
+
+evo_model = evolution.MISTv1() 
+atm_func = atmospheres.get_merged_atmosphere
+red_law = reddening.RedLawNoguerasLara18()
+filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
+
+
+metallicity = 0.0
+logAge = np.log10(0.005*10**9.)
+imf_set_ls = 'topheavy'
+dist = 8200 
+AKs = 1.7
+
+iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                                evo_model=evo_model, atm_func=atm_func,
+                                red_law=red_law, filters=filt_list,
+                                    iso_dir=iso_dir)
+imf_set = 'topheavy'
+imf_multi = multiplicity.MultiplicityUnresolved()
+massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
+if imf_set == 'Kroupa':
+    powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+elif imf_set == 'topheavy':
+    powers = np.array([-1.8, -1.8, -1.8]) 
+my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+
+# Mass estimation
+
+K_model = gns_young_all[:,4][bri]
+K = K_model
+stad_mass = []
+for loop in range(1):
+    M_clus = 2*1e3*u.Msun
+    max_stars = len(K_model)*2
+    porcentaje = 0
+    
+
+    print('---------',loop)
+    while  max_stars >= len(K_model)+0:
+        
+        # M_clus = 2*10**4*u.Msun
+        mass = M_clus.value -0.002*porcentaje*M_clus.value
+        dAks = 0.1
+        # dAks = 0.06
+        # print(mass)
+        np.object = object    
+        cluster = synthetic.ResolvedClusterDiffRedden(iso, my_imf, mass,dAks)
+        cluster_ndiff = synthetic.ResolvedCluster(iso, my_imf, mass)
+        clus = cluster.star_systems
+        clus_ndiff = cluster_ndiff.star_systems
+        
+        # max_mass = np.where((clus_ndiff['m_hawki_Ks']>min(K))&(clus_ndiff['m_hawki_Ks']<max(K)))
+        max_mass = np.where((clus['m_hawki_Ks']>min(K_model))&(clus['m_hawki_Ks']<max(K_model)))
+        
+        # max_stars = len(clus_ndiff['m_hawki_Ks'][max_mass])
+        max_stars = len(clus['m_hawki_Ks'][max_mass])
+        print(max_stars)
+        porcentaje +=1
+        print(mass)
+    stad_mass.append(mass)
+print('loop mass',mass )
+
+# %%
+
+fig, ax = plt.subplots(1,1,figsize=(5,5))
+
+# ax.scatter(clus_ndiff['m_hawki_H']-clus_ndiff['m_hawki_Ks'],clus_ndiff['m_hawki_Ks'],
+#             color = 'gray',alpha=1,s=50,zorder =2,linestyle="-", label = 'M$_{model}$ = %.0f M$_{\odot}$ \n $\overline{AKs}$ = %.2f\nAge = %.1f Myr'%(mass,AKs,10**((logAge)-6) ))
+
+ax.scatter(clus['m_hawki_H']-clus['m_hawki_Ks'],clus['m_hawki_Ks'],
+           color = '#1f77b4',alpha=0.5,s=20,zorder =2,linestyle="-",marker = 'x', label = 'M$_{model}$ = %.0f M$_{\odot}$ \n $\overline{AKs}$ = %.2f\nAge = %.1f Myr'%(mass,AKs,10**((logAge)-6) ))
+
+# ax.plot(iso.points['m_hawki_H']-iso.points['m_hawki_Ks'],iso.points['m_hawki_Ks'], ls = 'dashed')
 # 
-# iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
-# 
-# evo_model = evolution.MISTv1() 
-# atm_func = atmospheres.get_merged_atmosphere
-# red_law = reddening.RedLawNoguerasLara18()
-# filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
-# 
-# 
-# metallicity = 0.0
-# logAge = np.log10(0.0025*10**9.)
-# imf_set_ls = 'topheavy'
-# dist = 8200 
-# AKs = 1.73
-# 
-# iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
-#                                 evo_model=evo_model, atm_func=atm_func,
-#                                 red_law=red_law, filters=filt_list,
-#                                     iso_dir=iso_dir)
-# imf_set = 'topheavy'
-# imf_multi = multiplicity.MultiplicityUnresolved()
-# massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
-# if imf_set == 'Kroupa':
-#     powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
-# elif imf_set == 'topheavy':
-#     powers = np.array([-1.8, -1.8, -1.8]) 
-# my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
-# 
-# 
+
+all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
+min_col = []
+max_col = []
+ax.invert_yaxis()
+
+
+
+    
+
+
+
+all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
+min_col = []
+max_col = []
+ax.invert_yaxis()
+# Ks_sor = np.arange(min(clus['m_hawki_Ks']),max(clus['m_hawki_Ks']),0.5)
+Ks_sor = np.arange(min(np.round(np.round(clus['m_hawki_Ks'],0))),max(np.round(np.round(clus['m_hawki_Ks'],0))),1)
+# Ks_sor = np.arange(10,19,0.5)
+
+for j, inte in enumerate(Ks_sor):
+    if j == 0:
+        print('this is the lastone')
+        mm = np.where((clus['m_hawki_Ks']>Ks_sor[j]) & (clus['m_hawki_Ks']<Ks_sor[j+1]))
+        if len(mm[0]) < 1:
+            left = 0
+            right = 0
+        else:
+            left = min(all_color[mm])
+            right = max(all_color[mm])
+        # print(left, right) 
+        
+        min_col.append(left)
+        max_col.append(right)
+        
+    if j >0 and j<len(Ks_sor)-1:
+        mm = np.where((clus['m_hawki_Ks']>Ks_sor[j-1]) & (clus['m_hawki_Ks']<Ks_sor[j+1]))
+        if len(mm[0]) < 1:
+            left = 0
+            right = 0
+        else:
+            left = min(all_color[mm])
+            right = max(all_color[mm])
+        min_col.append(left)
+        max_col.append(right)
+       
+min_col = np.array(min_col)
+max_col = np.array(max_col)
+relleno = np.where(np.array(min_col) ==0)    
+min_col[relleno] = np.mean(np.delete(min_col,relleno))
+max_col[relleno] = np.mean(np.delete(max_col,relleno))
+
+
+
+ax.scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],
+            gns_young_all[:,4][bri], color = np.array(colorines)[bri],marker = '^',edgecolor = 'k',s=100, label = 'MYS',zorder =3)
+
+lgd = ax.legend(fontsize = 15)
+for handle in lgd.legend_handles[:-1]:
+    handle.set_sizes([200.0])
+    
+    
+plt.fill(np.append(min_col, max_col[::-1]),np.append(Ks_sor[0:-1], Ks_sor[0:-1][::-1]), '#1f77b4', alpha = 0.2,label ='$\sigma_{AKs} = %.2f$'%(dAks))
+ax.legend(fontsize = 12)    
+ax.set_xlabel('H$-$Ks', fontsize = 15)
+ax.set_ylabel('Ks', fontsize = 15)
+ax.set_ylim(max(K)+1.5,min(K)-1)
+ax.set_xlim(1,2.7)
+ax.xaxis.set_tick_params(labelsize=15)
+ax.yaxis.set_tick_params(labelsize=15)
+# plt.savefig(pruebas + 'simul_mass.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'clus_mass.png', dpi =300, bbox_inches = 'tight')
+
+#%%
 # fig, ax = plt.subplots(1,1)
 # ax.plot(iso.points['m_hawki_H']-iso.points['m_hawki_Ks'],iso.points['m_hawki_Ks'])
 # ax.invert_yaxis()
 # ax.set_xlim(1.30,4)
-# =============================================================================
 # %%
+# Create a latex table
+# df_obs = pd.DataFrame({'Target':['Sci','Sky'],
+#                    'RA(º)':[ '17$^{h}$45$^{m}$31.61$^{s}$','17$^{h}$44$^{m}$45.93$^{s}$'],
+#                    'Dec(º)':[' -28º56$^{''}$41.2$^{''}$','-28º53$^{''}$46.3$^{''}$'], 
+#                    'DIT':[1,''],
+#                    '[$\lambda$($\mu m$)]':['[1.93,2.50]',''],
+#                    'Exp. Time (s)':[115,''],})
 
+df_obs = pd.DataFrame({'Target':['Sci','Sky'],
+                   'RA(º)':[ '266.3817',' 266.1914'],
+                   'Dec(º)':['-28.9448','-28.8962'], 
+                   'Date':['3,6/06/21',''],
+                   'DIT(s)':[115,''],
+                   'NDIT':[2,''],
+                   '[$\lambda$($\mu m$)]':['[1.93,2.50]',''],
+                   })
+
+
+print(df_obs.to_latex(index = False, column_format = 'c'*len(df.columns), label = 'tab:obs_data', 
+                      multirow=True,
+                  caption = 'KMOS observation parametres'))
+
+# %%
+print(df)
 
 
