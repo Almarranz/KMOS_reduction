@@ -358,12 +358,16 @@ massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segem
 
 # aproach referes to the initial mass for the simulations. If 'top' we choose a high mass and then subtract, if 'bottom' we choose a low mass and the add
 
-aproach_ls = ['bottom', 'top']
+# aproach_ls = ['bottom', 'top']
+aproach_ls = ['top', 'top']
 K_model = gns_young_all[:,4][bri]
 K = K_model
 stad_mass = []
 tb_ls = []
 count_loop = 0
+bottom_mass = 0.5*1e3
+top_mass = 3.5*1e3
+mass_increment = 50
 for metallicity in metallicity_ls:
     for logAge in logAge_ls:
         for imf_set in imf_set_ls:
@@ -377,27 +381,28 @@ for metallicity in metallicity_ls:
                                             evo_model=evo_model, atm_func=atm_func,
                                             red_law=red_law, filters=filt_list,
                                                 iso_dir=iso_dir)
-            all_loops = 100
+            all_loops = 1
             for loop in range(all_loops):
                 tb_ind = np.random.choice([0,1])
                 aproach = aproach_ls[tb_ind]
                 count_loop +=1
                 if aproach == 'bottom':
-                    M_clus = 0.5*1e3*u.Msun
+                    M_clus = bottom_mass*u.Msun
                     suma = 1
                 elif aproach == 'top':
-                    M_clus = 3.5*1e3*u.Msun
+                    M_clus = top_mass*u.Msun
                     suma = -1
                 max_stars = len(K_model)*2
                 porcentaje = 0
-                print('loop %s out of %s'%(count_loop,all_loop*len(metallicity_ls)*len(logAge_ls)*len(imf_set_ls)))
+                print('loop %s out of %s'%(count_loop,all_loops*len(metallicity_ls)*len(logAge_ls)*len(imf_set_ls)))
             
-                print('---------',loop)
+                print('---------')
                 while  max_stars != len(K_model)+0:
                     
                     # M_clus = 2*10**4*u.Msun
-                    mass = M_clus.value +suma*0.01*porcentaje*M_clus.value
-                    dAks = 0.1
+                    # mass = M_clus.value +suma*0.1*porcentaje*M_clus.value
+                    mass = M_clus.value + suma*mass_increment*porcentaje
+                    ndAks = 0.1
                     # dAks = 0.06
                     # print(mass)
                     np.object = object    
@@ -413,7 +418,12 @@ for metallicity in metallicity_ls:
                     max_stars = len(clus['m_hawki_Ks'][max_mass])
                     
                     porcentaje +=1
+                    if porcentaje*mass_increment >= top_mass - 5*mass_increment :
+                        print('BREEEEEAAAAAKKKKK!!!!!')
+                        mass = np.mean(stad_mass)
+                        break
                     # print(mass,count_loop)
+                    
                 print(mass,max_stars)
                 stad_mass.append(mass)
                 tb_ls.append(tb_ind)
