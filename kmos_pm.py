@@ -179,7 +179,7 @@ for i, t in enumerate(talla):
     else: 
         sizs.append(fs*talla[i]/(np.round(t) -10))
 sizs = np.array(sizs)
-# %%
+# %
 # Br_gamma map
 y_size = 100#!!!
 Brg = fits.open(pruebas  +  'brg_emission.fits')
@@ -189,8 +189,9 @@ del brg_h['CRVAL3'], brg_h['CRPIX3'],brg_h['CDELT3'],brg_h['CUNIT3'],brg_h['CD3_
 
 wcs = WCS(brg_h)
 # wcs = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
-
+# %
 fig, ax = plt.subplots(1,3, figsize = (12,4))
+fuente = 12
 # fig, ax = plt.subplots(1,3)
 
 # r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
@@ -234,9 +235,9 @@ ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4]
 ls_young = []
 # for t in range(len(gns_young_all[:,3])):
 for t in range(len(bri[0])):
-    ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
-                  '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
-                  fontsize = 12,)
+    # ax[1].text(gns_young_all[t,3]-gns_young_all[t,4]+0.3,gns_young_all[t,4],
+    #               '[%.0f,%.0f] %.0f,%.0f'%(gns_young_all[t,-2],gns_young_all[t,-1],gns_young_all[t,-4],gns_young_all[t,-3]), 
+    #               fontsize = 12,)
     if t>1 and t%2 >0:
         plus = -1
     else:
@@ -261,10 +262,10 @@ ax[1].set_xlim(0.5,5)
 # ax[1].axis('scaled')
 
 
-ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = 12)
-ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',fontsize = 12)
-ax[1].set_ylabel('Ks',fontsize = 12)
-ax[1].set_xlabel('H$-$Ks',fontsize = 12)
+ax[0].set_xlabel('$\mu_{RA}$ (mas/yr)', fontsize = fuente)
+ax[0].set_ylabel('$\mu_{Dec}$ (mas/yr)',fontsize = fuente)
+ax[1].set_ylabel('Ks',fontsize = fuente)
+ax[1].set_xlabel('H$-$Ks',fontsize = fuente)
              
 
 ax[0].scatter(gns_all[0,9],gns_all[0,11], alpha = 0, color= '#1f77b4',
@@ -297,7 +298,206 @@ ax[1].yaxis.set_tick_params(labelsize=l_size )
 ax[2].xaxis.set_tick_params(labelsize=l_size )
 ax[2].yaxis.set_tick_params(labelsize=l_size )
 
+# %%
+# This bit is for making isochrones with SPISEA. You have to swhitch the conda
+# enviroment to  'base' for it to work
+import spisea
+from spisea import synthetic, evolution, atmospheres, reddening, ifmr
+from spisea.imf import imf, multiplicity
+
+
+# Load this only one, becouse it takes long
+# With coeficients
+# This gives you AKs and its sigma: 1.73 and 0.07
+# =============================================================================
+# gns_ext = '/Users/amartinez/Desktop/PhD/Libralato_data/extinction_maps/'
+# Aks_gns = pd.read_fwf(gns_ext + 'central.txt', sep =' ',header = None)
+# AKs_np = Aks_gns.to_numpy()#TODO
+# center = np.where(AKs_np[:,6]-AKs_np[:,8] > 1.3)#TODO
+# AKs_center =AKs_np[center]#TODO
+# 
+# AKs_coord = SkyCoord(ra=AKs_center[:,0]*u.degree, dec=AKs_center[:,2]*u.degree,frame ='icrs', equinox = 'J2000', obstime = 'J2015.5')
+# 
+# clus_coord =  SkyCoord(ra=gns_young_all[:,0][bri]*u.degree, dec=gns_young_all[:,1][bri]*u.degree)
+# idx = clus_coord.match_to_catalog_sky(AKs_coord)
+# validas = np.where(idx[1]<0.5*u.arcsec)
+# gns_match = AKs_center[idx[0][validas]]
+# AKs_clus_all =[] 
+# # %
+# for member in range(len(gns_match)):
+#     if gns_match[member,18] != '-':
+#         AKs_clus_all.append(float(gns_match[member,18]))
+# ind =np.where(np.array(AKs_clus_all) >1)
+# AKs_clus_all = np.array(AKs_clus_all)[ind]
+# AKs_clus = np.nanmean(AKs_clus_all)
+# print(AKs_clus)
+# 
+# =============================================================================
+iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
+
+evo_model = evolution.MISTv1() 
+atm_func = atmospheres.get_merged_atmosphere
+red_law = reddening.RedLawNoguerasLara18()
+filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
+
+
+
+dist = 8200 
+AKs = 1.7
+
+
+metallicity_ls = [0.0,0.3]
+logAge_ls = [np.log10(0.0025*10**9.),np.log10(0.005*10**9.),np.log10(0.0075*10**9.),np.log10(0.01*10**9.)]
+imf_set_ls = ['topheavy','Kroupa']
+imf_multi = multiplicity.MultiplicityUnresolved()
+massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
+# if imf_set == 'Kroupa':
+#     powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+# elif imf_set == 'topheavy':
+#     powers = np.array([-1.8, -1.8, -1.8]) 
+
+# aproach referes to the initial mass for the simulations. If 'top' we choose a high mass and then subtract, if 'bottom' we choose a low mass and the add
+
+aproach_ls = ['bottom', 'top']
+K_model = gns_young_all[:,4][bri]
+K = K_model
+stad_mass = []
+tb_ls = []
+count_loop = 0
+for metallicity in metallicity_ls:
+    for logAge in logAge_ls:
+        for imf_set in imf_set_ls:
+            if imf_set == 'Kroupa':
+                powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+            elif imf_set == 'topheavy':
+                powers = np.array([-1.8, -1.8, -1.8]) 
+            my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+            
+            iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                                            evo_model=evo_model, atm_func=atm_func,
+                                            red_law=red_law, filters=filt_list,
+                                                iso_dir=iso_dir)
+            all_loops = 100
+            for loop in range(all_loops):
+                tb_ind = np.random.choice([0,1])
+                aproach = aproach_ls[tb_ind]
+                count_loop +=1
+                if aproach == 'bottom':
+                    M_clus = 0.5*1e3*u.Msun
+                    suma = 1
+                elif aproach == 'top':
+                    M_clus = 3.5*1e3*u.Msun
+                    suma = -1
+                max_stars = len(K_model)*2
+                porcentaje = 0
+                print('loop %s out of %s'%(count_loop,all_loop*len(metallicity_ls)*len(logAge_ls)*len(imf_set_ls)))
+            
+                print('---------',loop)
+                while  max_stars != len(K_model)+0:
+                    
+                    # M_clus = 2*10**4*u.Msun
+                    mass = M_clus.value +suma*0.01*porcentaje*M_clus.value
+                    dAks = 0.1
+                    # dAks = 0.06
+                    # print(mass)
+                    np.object = object    
+                    cluster = synthetic.ResolvedClusterDiffRedden(iso, my_imf, mass,dAks)
+                    cluster_ndiff = synthetic.ResolvedCluster(iso, my_imf, mass)
+                    clus = cluster.star_systems
+                    clus_ndiff = cluster_ndiff.star_systems
+                    
+                    # max_mass = np.where((clus_ndiff['m_hawki_Ks']>min(K))&(clus_ndiff['m_hawki_Ks']<max(K)))
+                    max_mass = np.where((clus['m_hawki_Ks']>min(K_model))&(clus['m_hawki_Ks']<max(K_model)))
+                    
+                    # max_stars = len(clus_ndiff['m_hawki_Ks'][max_mass])
+                    max_stars = len(clus['m_hawki_Ks'][max_mass])
+                    
+                    porcentaje +=1
+                    # print(mass,count_loop)
+                print(mass,max_stars)
+                stad_mass.append(mass)
+                tb_ls.append(tb_ind)
+np.savetxt(pruebas + 'mass_stat.txt',np.c_[np.array(stad_mass),np.array(tb_ls)], fmt = '%.0f')
+print('loop mass',mass )
+
+# %%
+
+
+ax[2].scatter(clus['m_hawki_H']-clus['m_hawki_Ks'],clus['m_hawki_Ks'],
+           color = '#1f77b4',alpha=0.5,s=20,zorder =2,linestyle="-",marker = 'x', label = 'M$_{model}$ = %.0f M$_{\odot}$ \n $\overline{AKs}$ = %.2f\nAge = %.1f Myr\nIMF = %s'%(mass,AKs,10**((logAge)-6),imf_set ))
+
+# ax.plot(iso.points['m_hawki_H']-iso.points['m_hawki_Ks'],iso.points['m_hawki_Ks'], ls = 'dashed')
+# 
+
+all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
+min_col = []
+max_col = []
+ax[2].invert_yaxis()
+
+all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
+min_col = []
+max_col = []
+ax[2].invert_yaxis()
+# Ks_sor = np.arange(min(clus['m_hawki_Ks']),max(clus['m_hawki_Ks']),0.5)
+Ks_sor = np.arange(min(np.round(np.round(clus['m_hawki_Ks'],0))),max(np.round(np.round(clus['m_hawki_Ks'],0))),1)
+# Ks_sor = np.arange(10,19,0.5)
+
+for j, inte in enumerate(Ks_sor):
+    if j == 0:
+        print('this is the lastone')
+        mm = np.where((clus['m_hawki_Ks']>Ks_sor[j]) & (clus['m_hawki_Ks']<Ks_sor[j+1]))
+        if len(mm[0]) < 1:
+            left = 0
+            right = 0
+        else:
+            left = min(all_color[mm])
+            right = max(all_color[mm])
+        # print(left, right) 
+        
+        min_col.append(left)
+        max_col.append(right)
+        
+    if j >0 and j<len(Ks_sor)-1:
+        mm = np.where((clus['m_hawki_Ks']>Ks_sor[j-1]) & (clus['m_hawki_Ks']<Ks_sor[j+1]))
+        if len(mm[0]) < 1:
+            left = 0
+            right = 0
+        else:
+            left = min(all_color[mm])
+            right = max(all_color[mm])
+        min_col.append(left)
+        max_col.append(right)
+       
+min_col = np.array(min_col)
+max_col = np.array(max_col)
+relleno = np.where(np.array(min_col) ==0)    
+min_col[relleno] = np.mean(np.delete(min_col,relleno))
+max_col[relleno] = np.mean(np.delete(max_col,relleno))
+
+
+
+ax[2].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],
+            gns_young_all[:,4][bri], color = np.array(colorines)[bri],marker = '^',edgecolor = 'k',s=y_size, )
+
+lgd = ax[2].legend(fontsize =leg_siz)
+for handle in lgd.legend_handles[:-1]:
+    handle.set_sizes([200.0])
+    handle.set_alpha(1)
+    
+
+plt.fill(np.append(min_col, max_col[::-1]),np.append(Ks_sor[0:-1], Ks_sor[0:-1][::-1]), '#1f77b4', alpha = 0.2,label ='$\sigma_{AKs} = %.2f$'%(dAks))
+ax[2].legend(fontsize = 8)    
+ax[2].set_xlabel('H$-$Ks', fontsize = fuente)
+ax[2].set_ylabel('Ks', fontsize = fuente)
+ax[2].set_ylim(max(K)+1.5,min(K)-1)
+ax[2].set_xlim(1,2.7)
+# ax[2].axis('equal')
 # %
+# plt.savefig(pruebas + 'simul_mass.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'pm_cmd_mass.png', dpi =300, bbox_inches = 'tight')
+sys.exit(473)
+
+# %%
 # Calculate the probability of a group of stars to be young and hava similar 
 # velocities just by chance
 gns_stat_all = []
@@ -354,15 +554,15 @@ def rand_test(data, n_per = 20000):
 diff_sim_ra,diff_sim_dec,diff_sim_v, p_sta_ra, p_sta_dec, p_sta_v = rand_test(pm_age_bri)
 print( p_sta_ra, p_sta_dec, p_sta_v)
 
-# %%
-# fig, ax = plt.subplots(1,1, figsize = (4,4))
-ax[2].hist(diff_sim_v,histtype = 'step', lw = 2, label = 'Simulated')
-ax[2].axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
-ax[2].set_xlabel('|$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$|(mas/yr)', fontsize = 12)
-ax[2].set_ylabel('# of simulations',fontsize = 12)
-ax[2].legend()
+# %
+fig, ax = plt.subplots(1,1, figsize = (4,4))
+ax.hist(diff_sim_v,histtype = 'step', lw = 2, label = 'Simulated')
+ax.axvline(1.98, ls = 'dashed', color = '#ff7f0e', label = 'Observed')
+ax.set_xlabel('|$\sigma \\vec{\mu}_y - \sigma \\vec{\mu}_l$|(mas/yr)', fontsize = 12)
+ax.set_ylabel('# of simulations',fontsize = 12)
+ax.legend()
 
-# plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
+plt.savefig(pruebas + 'sim_sig.png', dpi =300, bbox_inches = 'tight')
 # ax.hist(yv,histtype = 'step')
 # # ax.axvline(1.98)
 
@@ -854,12 +1054,6 @@ all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
 min_col = []
 max_col = []
 ax.invert_yaxis()
-
-
-
-    
-
-
 
 all_color = clus['m_hawki_H']-clus['m_hawki_Ks']
 min_col = []
