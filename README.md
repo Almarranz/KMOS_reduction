@@ -6,8 +6,8 @@ The sky and the target are in different observation blocks,so we run esoReflex s
 There are two differents epochs, that esoReflex combine in a simgle block (COMBINE_obs). 
 
 ### WARNING!
-I have added at some point on my life a fits file called RESPONSE_KKK.fits. It seems that you need this file for the pipeline
-yield the results flux calibrated. I dont remember how I ended up with this conclusio or where this file was located.
+I have added at some point in my life a fits file called RESPONSE_KKK.fits. It seems that you need this file for the pipeline
+yield the results flux calibrated. I dont remember how I ended up with this conclusion or where this file was located.
 
 Afeter visiting CAB in Madrid we made some changes in the pipe line configuration:
 > We ara going to use the standard star for the teluric correction
@@ -85,6 +85,10 @@ alingment of the whole cube (for a single IFU)
 7. kmos_pm.py. Plots positions, velocites and CMD for the stars with a match with GNS_LIB catalog. 
 Also makes latex table of the YSO and random simulations to compare with the real data.
 
-8. SNR.py. Calculate the SNR of the selected YSO stars in kmos_pm.py
+8. SNR.py. Calculate the SNR of the selected YSO stars in kmos_pm.py.
 
-9. young_spect_plot.py. Plots the spectra of the selected YSO.
+9. normalizator_polynommial.py. Nomalizes a the spectra for massive stars using a spline polynomial. 
+> Note: Im not sure if this script should be before of SNR.py.
+
+10. young_spect_plot.py. Plots the spectra of the selected YSO and some late type stars of the same 
+magnitude for comparison.
