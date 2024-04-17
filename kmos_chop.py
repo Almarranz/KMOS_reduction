@@ -46,7 +46,7 @@ plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})# 
 # %%
-period = 'p105'#TODO
+period = 'p107'#TODO
 reduction = 'ABC'
 
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
@@ -163,14 +163,14 @@ for ifu in range(1,24):
 # sys.exit('125')
 # %%
 
-ifus =  [ 3,  5,  6,  7,  8,  9, 10, 11, 12, 13,15, 17,
-         19, 21, 23]
-halfs = [1,2]
-# ifu_sel = 6#TODO
-# half_ifu = 2#TODO
+# ifus =  [ 3,  5,  6,  7,  8,  9, 10, 11, 12, 13,15, 17,
+#          19, 21, 23]
+# halfs = [1,2]
+ifus = [13]#TODO
+halfs = [2]#TODO
 for ifu_sel in ifus:
     for half_ifu in halfs:
-        yp =0#TODO Negative move ifus upward
+        yp =-2#TODO Negative move ifus upward
         xp = 0#TODO Negative move ifus to the right
         # temp = np.zeros((433,650))
         # temp_noise =  np.zeros((433,650))

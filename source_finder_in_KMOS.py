@@ -69,10 +69,10 @@ IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 # %%
 
-ifu_sel =13#!!!
+ifu_sel =6#!!!
 half_ifu =1#!!!
-max_d = 5#!!!
-min_d = 2#!!!
+max_d = 3#!!!
+min_d = 0#!!!
 search_r = 0.0015#!!!
 
 
@@ -84,7 +84,7 @@ spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 # sources = 'auto'#!!!
 sources = 'hand'#!!!
-np.savetxt(spec_folder + 'distance_for_aa_ifu%s_half%s.txt'%(ifu_sel,half_ifu), np.array([max_d,min_d]).T,fmt = '%.0f',header ='max distance,  min distance')
+# np.savetxt(spec_folder + 'distance_for_aa_ifu%s_half%s.txt'%(ifu_sel,half_ifu), np.array([max_d,min_d]).T,fmt = '%.0f',header ='max distance,  min distance')
 
 fig, ax = plt.subplots(1,1,figsize =(10,10)) 
 # im = fits.open(pruebas  + 'Kmos_image.fits')
@@ -283,6 +283,7 @@ fig, ax = plt.subplots(1,1)
 ax.scatter(gns_[:,-2][l1], gns_[:,-1][l1])
 ax.scatter(gns_[:,-2][l1_y], gns_[:,-1][l1_y],s = 100, color = 'red', alpha = 0.5)
 
+
 ax.set_xlabel('x pix')
 ax.set_ylabel('y pix')
 fig, ax = plt.subplots(1,1)
@@ -291,12 +292,16 @@ ax.scatter(gns_[:,9][l1_y], gns_[:,11][l1_y],s = 100, color = 'red', alpha = 0.5
 ax.set_xlabel('mu_ra')
 ax.set_ylabel('mu_dec')
 
+
+all_tosave = gns_[l1]
+all_tosave[:,-2:] = xy[l2]
+
 youg_tosave = gns_[l1_y]
 youg_tosave[:,-2:] = lc2_y
 
 if save_lists == 1:
     gns_header = '0RA_gns 1DE_gns 	2Jmag 	3Hmag 	4Ksmag 	5ra 	6Dec 	7x_c 	8y_c 	9mua 10dmua 	11mud 	12dmud 	13time 	14n1	15n2	16ID 	17mul 	18mub 	19dmul 	20dmub 	21m139 	22Separation 23Xkmos 24Ykmos'
-    np.savetxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),gns_[l1],header = gns_header, fmt = '%.8f')
+    np.savetxt(spec_folder + 'gns_lib_in_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),all_tosave,header = gns_header, fmt = '%.8f')
     if len(xy_y) > 0:
         np.savetxt(spec_young + 'gns_lib_in_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),youg_tosave,header = gns_header, fmt = '%8f')
         np.savetxt(spec_young + 'xy_coord_young_kmos_ifu%s_half%s.txt'%(ifu_sel, half_ifu),xy_y, header = 'x, y',fmt ='%.8f')

@@ -21,6 +21,8 @@ from matplotlib.colors import LogNorm
 from matplotlib.tri import Triangulation
 import regions
 from matplotlib.patches import Rectangle
+from regions import Regions
+import IPython
 # %%plotting pa    metres
 from matplotlib import rc
 from matplotlib import rcParams
@@ -46,6 +48,12 @@ plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 
+# Enable automatic plotting mode
+# IPython.get_ipython().run_line_magic('matplotlib', 'auto')
+IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+
+
+
 # We are going to make a Br_g emision map
 reduction = 'ABC'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
@@ -53,6 +61,8 @@ aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
 log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
 esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_group_mosaic_K_Half1_COMBINED_IMAGE_mapping.fits'%(reduction)
+cube_no_cont = pruebas + 'cube_no_cont_all.fits'
+
 ima = fits.open(esorex_cube_5)
 mapa = WCS(ima[1].header).celestial
 h0 = ima[0].header
@@ -81,6 +91,7 @@ CD1_2   = 2.6520556700209487E-5
 CD2_1   = 2.6520556700209487E-5
 CD2_2   = -7.3124987844013485E-6
     
+
 # if period == 'p107':   
 #     NAXIS1  = 650
 #     NAXIS2  = 433
@@ -106,42 +117,64 @@ for i, para in enumerate(paras):
     
 
 # %%
-temp5 = np.zeros((ima[1].data.shape[1],ima[1].data.shape[2]))
+
 # %%
-data = ima[1].data
-brg = np.mean(data[1286:1288,:,:], axis =0) 
-brg_mean = np.nanmean((data - brg),axis = 0)
+data = fits.open(cube_no_cont)[0].data
+
+brg_mean = np.mean(data[1285:1291,:,:], axis =0) 
+hdu_brg = fits.PrimaryHDU(data = brg_mean, header = h1)
+hdu_brg.writeto(pruebas +  'brg_emission.fits', overwrite= True)
+
+heI_mean = np.mean(data[711:716,:,:], axis = 0)
+hdu_heI = fits.PrimaryHDU(data = heI_mean, header = h1)
+hdu_heI.writeto(pruebas +  'heI_emission.fits', overwrite= True)
+
+coI = np.arange(1969,1980)
+coII = np.arange(2124,2134)
+co = np.r_[coI,coII]
+co_mean = np.mean(data[co,:,:], axis = 0)
+hdu_co = fits.PrimaryHDU(data = co_mean, header = h1)
+hdu_co.writeto(pruebas + 'co_absortion.fits', overwrite = True) 
 # %%
-hdul = fits.HDUList()
-hdul.append(fits.PrimaryHDU(header = h0))
-hdul.append(fits.ImageHDU(brg_mean*-1,h1, name ='Brg emission'))
-hdul.writeto(pruebas  + 'brg_mean.fits', overwrite = True)
+# cube_mean = np.nanmedian(ima[1].data[:,:,:], axis = 0)
+# hdu_cube = fits.PrimaryHDU(data = cube_mean, header = h1)
+# hdu_cube.writeto(pruebas + 'cube_mean.fits', overwrite = True)
+# %%
 wcs = WCS(h1)
-clus_o = np.loadtxt('/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS/ID_AB.txt')
-clus_young = np.loadtxt('/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS/young_kmos_bg.txt', usecols=(0,1), unpack= True)
+# clus_o = np.loadtxt('/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS/ID_AB.txt')
+clus_o = np.loadtxt('/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS/p1_p113/ID_AB.txt')
+# clus_young = np.loadtxt('/Users/amartinez/Desktop/PhD/ESO_proposals/KMOS/young_kmos_bg.txt', usecols=(0,1), unpack= True)
 
 clus_xy = wcs.wcs_world2pix(clus_o[:,0],clus_o[:,1],1,1)
-clus_young_xy = wcs.wcs_world2pix(clus_young[0],clus_young[1],1,1)
+# clus_young_xy = wcs.wcs_world2pix(clus_young[0],clus_young[1],1,1)
+# %%
+ifu_sel_ls = np.arange(6,8)
+half_ifus = [1,2]
+reductions = ['ABC']
+age = 'young_candidates'
+# age = 'cluster_spectra'
+
+clus_young_xy = np.loadtxt(pruebas + 'xy_young.txt')
+# for  ifu_sel in ifu_sel_ls:
+#     for half_ifu in half_ifus:
+#         spec_fold = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/%s/ifu_%s/half_%s/'%(reductions[0],age,ifu_sel,half_ifu)
+
+#         xy = np.loadtxt(spec_fold + 'xy_young_ifu%s_half%s.txt'%(ifu_sel, half_ifu),
+#                            usecols=(0,1), unpack= True)
+#         clus_young_xy.append(xy)
+# sys.exit('163')    
 # %%
 
-data = brg_mean*-1
-fill_value = 0.0  # Replace with an appropriate fill value
-data = np.nan_to_num(data, nan=fill_value, posinf=fill_value, neginf=fill_value)
-
-
-region_name = pruebas + 'ds9.reg'
-from regions import Regions
-r = Regions.read(pruebas + 'ds9.reg',format='ds9')
+r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
 
 # %%
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 v_min =1
 v_max = 0
-data = brg_mean*-1
 # im = ax.imshow(data*1e17, cmap='Greys', origin='lower',vmin=v_min,vmax = v_max)
 im = ax.imshow(ima_1[1].data, cmap='Greys', origin='lower',vmin=0.001e-16,vmax = 0.1e-16)
-for i in range(6):
-    ax.plot(r[i].vertices.x,r[i].vertices.y, color = 'lime')
+for i in range(17):
+    ax.plot(r[i].vertices.x,r[i].vertices.y, color = 'white')
 # %
 xticks = ax.get_xticks()
 yticks = ax.get_yticks()
@@ -154,11 +187,12 @@ coor_tiks = wcs.wcs_pix2world(x_t,y_t,1,1)
 
 new_x_tick_labels = np.round(coor_tiks[0],3)  # Replace with your desired labels
 new_y_tick_labels =  np.round(coor_tiks[1],3)  # Replace with your desired labels
-
+# %
 # Set the new tick labels for the x and y axes
 ax.set_xticklabels(new_x_tick_labels)
 ax.set_yticklabels(new_y_tick_labels)
-
+# sys.exit(193)
+# %%
 # ax.tricontour(x,y,z, levels=niveles, colors='white')
 # fig.colorbar(im,ax =ax,shrink=0.7)
 # cbar = fig.colorbar(im, orientation='vertical')
@@ -166,7 +200,7 @@ ax.set_yticklabels(new_y_tick_labels)
 # for p in range(15):
 #     ax.add_patch(patch_list[p])
 ax.scatter(clus_xy[0],clus_xy[1],s = 200,color ='lime', label = 'Co-moving group',edgecolor = 'k',lw =1)
-ax.scatter(clus_young_xy[0],clus_young_xy[1],color = 'fuchsia',label = 'No CO lines')
+ax.scatter(clus_young_xy[:,0],clus_young_xy[:,1],color = 'fuchsia',label = 'No CO lines')
 
 lgnd = ax.legend()
 for handle in lgnd.legend_handles:
@@ -178,17 +212,18 @@ ax.set_xlim(-50, 670)
 ax.set_ylim(-50, 845)
 ax.set_xlabel('Ra (°)')
 ax.set_ylabel('Dec (°)')
-plt.savefig(pruebas  + 'br_map.png', bbox_inches = 'tight')
+# plt.savefig(pruebas  + 'br_map.png', bbox_inches = 'tight')
 # %%
 
-
-
-
-# %
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 v_min =1
 v_max = 0
-data = brg_mean*-1
-im = ax.imshow(data*1e17, cmap='Greys', origin='lower')
+im = ax.imshow(brg_mean, cmap='Greys', origin='lower',vmin=0.001e-17,vmax = 0.55e-17)
+# im = ax.imshow(heI_mean, cmap='Greys', origin='lower',vmin=0e-17,vmax = 1e-17)
+for i in range(17):
+    ax.plot(r[i].vertices.x,r[i].vertices.y, color = 'lime')
 # im = ax.imshow(ima_1[1].data, cmap='Greys', origin='lower',vmin=v_min,vmax = v_max)
+fig.colorbar(im, ax=ax, orientation='vertical')
+
+
 

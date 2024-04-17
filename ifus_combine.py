@@ -48,20 +48,39 @@ rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 # %%
 
+# reduction = 'ABC'
+reduction = 'tramos'
+
 
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
-aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment/'
-
-log_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/'
-esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_ABC/COMBINE_SKY_TWEAK_mapping.fits'
+aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
 
 
-log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/'
-esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_ABC/COMBINE_SKY_TWEAK_mapping.fits'
+log_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_%s/'%('ABC')
+esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
 
+log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
+esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
 
-ifu_sel = 6 #TODO
+meancubes = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cubes/'%(reduction)
+
+ifu_sel =5#TODO
 half_ifu = 2#TODO
+
+
+combine_same = True # Set to True to use only one of the periods (for the ifus where p107 is bad and the combination if worst that using a single image)
+# combine_same = False # Set to True to use only one of the periods (for the ifus where p107 is bad and the combination if worst that using a single image)
+
+if combine_same:
+    esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
+    # esorex_cube_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p107_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
+# 
+# if ifu_sel == 1:# ifu1 in the p107 cube is fucked, so we will use both p105
+#     esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
+# if ifu_sel == 6 and half_ifu ==1:
+#     esorex_cube_7 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/COMBINE_SKY_TWEAK_mapping.fits'%(reduction)
+
+
 
 dic_x5 = {}
 dic_y5 = {}
@@ -192,19 +211,34 @@ if half_ifu == 0:
 if half_ifu != 0:
     xp, yp = np.loadtxt(aling + 'ifu%s_half%s_xy_plus.txt'%(ifu_sel, half_ifu),unpack = True)
 xp, yp = int(xp), int(yp)
-# yp = -2
-# xp = 10
+
+if combine_same:
+    xp, yp = 0, 0
+print('xp, yp',xp, yp)
+
+# yp = 1
+# xp = 2
 
 
 
 
 if x_up + xp > ima7.shape[2] or y_up + yp > ima7.shape[1] :
-    print('PAAAADDD')
+    print('PAD X left or PAD Y up')
     pad = int(max(x_up + xp - ima7.shape[2],y_up + yp - ima7.shape[1]))
     ima7 = np.pad(ima7,(0,pad), mode = 'constant') 
-    ima7 = ima7[:-pad,:,:]
-    
+    ima7 = ima7[:-pad,:,:]# Here we eliminate the extradimension in the wavelenth
+
 temp7 =ima7[:, y_d+yp  : y_up+yp, x_d + xp : x_up +xp ]
+
+if y_d+yp < 0:
+    print('PAD Y down')
+    ima7 = np.pad(ima7,(abs(y_d+yp),0),mode = 'minimum')
+    temp7 = ima7[:-abs(y_d+yp),0  : 54 , x_d + xp : x_up +xp ]
+
+
+    
+    
+# %%
 # temp7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = ima7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27+yp:max(dic_y7['ifu%s'%(ifu_sel)])+yp,min(dic_x7['ifu%s'%(ifu_sel)])+xp:max(dic_x7['ifu%s'%(ifu_sel)])+27+ xp]
 # temp_noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27] = noise7[:,min(dic_y7['ifu%s'%(ifu_sel)])-27:max(dic_y7['ifu%s'%(ifu_sel)]),min(dic_x7['ifu%s'%(ifu_sel)]):max(dic_x7['ifu%s'%(ifu_sel)])+27]
 # sys.exit(161)
@@ -218,7 +252,7 @@ new_hdul = fits.HDUList()
 new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp7, header=header2,name='DATA'))
 # new_hdul.append(fits.ImageHDU(temp_noise7,header=header3, name='ERROR'))
-# new_hdul.writeto(pruebas + 'cube_ifu%s_%s.fits'%(ifu_sel,'p107'),overwrite=True)
+new_hdul.writeto(pruebas + 'cube_ifu%s_half%s_%s.fits'%(ifu_sel,half_ifu,'p107'),overwrite=True)
 # %%
 fig, ax = plt.subplots(1,1,figsize=(8,8))
 ax.imshow(temp7[1550,:,:], vmin = -0.8e-20, vmax = 0.1e-16, origin = 'lower', cmap = 'Greys')
@@ -230,9 +264,9 @@ new_hdul.append(fits.PrimaryHDU(header=header1))
 new_hdul.append(fits.ImageHDU(temp, header=header2,name='DATA'))
 # new_hdul[1].header.update(ifu_header.to_header())
 if half_ifu == 0:
-    new_hdul.writeto(aling + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
+    new_hdul.writeto(meancubes + 'cube_ifu%s_mean.fits'%(ifu_sel),overwrite=True)
 elif half_ifu != 0:
-    new_hdul.writeto(aling + 'cube_ifu%s_half%s_mean.fits'%(ifu_sel, half_ifu),overwrite=True)
+    new_hdul.writeto(meancubes + 'cube_ifu%s_half%s_mean.fits'%(ifu_sel, half_ifu),overwrite=True)
 
 
 

@@ -63,7 +63,8 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 
-reduction = 'ABC'
+# reduction = 'ABC'
+reduction = 'tramos'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
 log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
@@ -77,28 +78,32 @@ COI =  2.29322
 COII = 2.32246
 COIII = 2.3525
 Brg = 2.165
-He = 2.12
+He = 2.112
 HeII = 2.189
+N3 = 2.115
+C4 = 2.078
+
 # H2 = 2.12
-l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He', 'HeII','$^{12}$CO(4,2)']
-lines = [HeI, COI, COII,Brg, He, HeII,COIII]
+l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He\n', 'HeII','$^{12}$CO(4,2)','NIII','CIV']
+lines = [HeI, COI, COII,Brg, He, HeII,COIII, N3, C4]
 
 # l_names = [ '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He','$^{12}$CO(4,2)']
 # lines = [COI, COII,Brg, He,COIII]
 
 age = 'young_candidates'
-reductions = ['ABC']
+reductions = [reduction]
 ls_spec = np.loadtxt(pruebas + 'ls_young.txt')
 # ls_spec = np.delete(ls_spec,1, axis =0)
 # colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f','#8c564b', '#e377c2','#7f7f7f']
 colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F']
 
 fig, ax = plt.subplots(1, 1, figsize = (30,18))
+fig.suptitle('%s'%(reduction))
 ax2 = ax.twiny()
 # fig.subplots_adjust(hspace=0)
 
 # lim_d, lim_u = 2.15, COIII +0.01
-lim_d, lim_u = 2, COIII +0.01#!!!
+lim_d, lim_u = 2, COIII +0.12#!!!
 
 norm_0, norm_1 = HeI, He
 d_norm, u_norm =  2.2,2.28 #!!!
@@ -139,7 +144,7 @@ for i in range(len(ls_spec)):
     ax.set_ylabel('Normalized flux', fontsize = 25)
     
     for l in lines:
-        ax.axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed') 
+        ax.axvline(l, color = 'grey', alpha = 0.1, ls = 'dashed', zorder = 0) 
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize = 10 )
 ax.tick_params(left = False, right = False , labelleft = False , 
               labelbottom = True, bottom = True, labelsize = 20) 
@@ -248,4 +253,11 @@ def re_plot(event):
 cidv = fig.canvas.mpl_connect('button_press_event',vertical)
 cid_snr = fig.canvas.mpl_connect('key_press_event',snr_cal)
 cid_re = fig.canvas.mpl_connect('key_press_event',re_plot)
+
+# %%
+
+
+
+
+
 

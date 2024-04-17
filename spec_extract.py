@@ -58,8 +58,8 @@ IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# reduction = 'tramos'
-reduction = 'ABC'
+reduction = 'tramos'
+# reduction = 'ABC'
 pruebas = '/Users/amartinez/Desktop/PhD/KMOS/practice/'
 aling = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/ifu_alignment_%s/'%('ABC')
 log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
@@ -70,7 +70,7 @@ log_5 = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/'%('ABC')
 
 
 # %%
-ifu_sel = 3
+ifu_sel = 5
 half_ifu = 2
 spec_folder = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
 spec_young = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/young_candidates/ifu_%s/half_%s/'%(reduction, ifu_sel, half_ifu)
@@ -358,10 +358,17 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
     ring_mean = np.mean(ring, axis =1)
     
     
+    
     temp = ax.scatter(mask_rand[1],mask_rand[0], color = colorin, s = 20)
     
 
     ax2.plot(lam, ring_mean, color = 'k', alpha = 0.2)
+    ax2.plot(lam,ring_mean[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
+    ax2b.axhline(np.nanmean(ring_mean[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
+    ax2b.axhline(np.nanmean(ring_mean[ind1[0][0]:ind2[0][0]])*2, alpha = 1, color = 'k', ls = 'dashed')
+    sig = np.nanstd(ring_mean[ind1[0][0]:ind2[0][0]])
+    ax2.axhspan(np.nanmean(ring_mean[ind1[0][0]:ind2[0][0]])- sig*sig_w,
+                np.nanmean(ring_mean[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
     plt.draw()
     
     # r_ind = np.random.choice(len(mask_around[0]), size=30, replace=False)
@@ -386,7 +393,7 @@ def extract_spec(cube,y,x,event2,event): # Use the arrows to select the ring of 
         h_esp = fits.open(model)[0].header
         hdu_spec = fits.PrimaryHDU(data=spec_mean_sky, header=h_esp)
 # =============================================================================
-#         hdu_spec.writeto(spec_folder + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)
+#         hdu_spec.writeto(spec_folder + 'spec_ifu%s_half%s_%s_%s.fits'%(ifu_sel,half_ifu,x,y), overwrite= True)#!!!
 # =============================================================================
         
         # return spec_mean_sky
@@ -441,15 +448,15 @@ ax2b.set_xticks(lines)
 tl = l_names
 ax2b.set_xticklabels(tl)
 
-# if sky_cal == 'Sci':
-#     sig_w = 3
-#     ind1 = np.where(abs(lam-He)== min(abs(lam-He)))
-#     ind2 = np.where(abs(lam-Brg)== min(abs(lam-Brg)))
-#     ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
-#     ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
-#     sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
-#     ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
-#                 np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
+if sky_cal == 'Sci':
+    sig_w = 3
+    ind1 = np.where(abs(lam-He)== min(abs(lam-He)))
+    ind2 = np.where(abs(lam-Brg)== min(abs(lam-Brg)))
+    # ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
+    # ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
+    # sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
+    # ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
+    #             np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
 
 def plot_spec(flux):
     
@@ -536,11 +543,11 @@ def delete(event):
             ax2.set_xticks(lines)
             tl = l_names
             ax2.set_xticklabels(tl)   
-        #     ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
-        #     ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
-        #     sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
-        #     ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
-        #                 np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
+            # ax2b.plot(lam,difuse_flux[good], color ='k', alpha = 0.3,zorder = 1, label ='Difuse emission')
+            # ax2b.axhline(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]]), alpha = 0.3, color = 'k')
+            # sig = np.nanstd(difuse_flux[ind1[0][0]:ind2[0][0]])
+            # ax2.axhspan(np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])- sig*sig_w,
+            #             np.nanmean(difuse_flux[ind1[0][0]:ind2[0][0]])+ sig*sig_w, color = 'k', alpha = 0.1)
         if event.key == 'y':
             flux_young, flux_young_no_sky = extract_spec(cube,int(np.rint(x)), int(np.rint(y)),event, event)
             h_esp = fits.open(model)[0].header

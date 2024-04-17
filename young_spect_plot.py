@@ -61,7 +61,7 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 # %%
 # Enable automatic plotting mode
 # IPython.get_ipython().run_line_magic('matplotlib', 'auto')
-IPython.get_ipython().run_line_magic('matplotlib', 'inline')
+IPython.get_ipython().run_line_magic('matplotlib', 'inline')    
 
 # reduction = 'ABC'
 reduction = 'tramos'
@@ -79,14 +79,17 @@ COI =  2.29322
 COII = 2.32246
 COIII = 2.3525
 Brg = 2.165
-He = 2.12
-HeII = 2.189
+HeII = 2.1885
+HeI_ = 2.112
+N3 = 2.115
+C4 = 2.078
+C4_ = 2.069
 # H2 = 2.12
 # l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He', 'HeII','$^{12}$CO(4,2)']
 # lines = [HeI, COI, COII,Brg, He, HeII,COIII]
 
-l_names = [ '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He','$^{12}$CO(4,2)']
-lines = [COI, COII,Brg, He,COIII]
+l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'HeI   \n','$^{12}$CO(4,2)','CIV','      NIII', 'HeII','CIV\n']
+lines = [HeI, COI, COII,Brg, HeI_,COIII,C4, N3, HeII,C4_]
 
 age = 'young_candidates'
 # reductions = ['ABC']
@@ -98,10 +101,11 @@ colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#
 fig, ax = plt.subplots(len(ls_spec), 2, figsize = (30,18))
 fig.subplots_adjust(hspace=0)
 
-lim_d, lim_u = 2.15, COIII +0.01
+# lim_d, lim_u = 2.15, COIII +0.01
+lim_d, lim_u = HeI - 0.01, COIII +0.01
 # lim_d, lim_u = 2, COIII +0.01#!!!
 
-norm_0, norm_1 = HeI, He
+norm_0, norm_1 = HeI, HeI_
 d_norm, u_norm =  2.2,2.28 #!!!
 snr_d, snr_u = 2.2356, 2.2661#!!!
 dic_yso = {}
@@ -163,13 +167,14 @@ ax2.plot(lam,sp_data, alpha = 0)
 # fig.subplots_adjust(hspace=0)
 late_t = np.loadtxt(pruebas + 'late_type_for_comparation.txt')
 late_t[-1] = np.array([10,1,14.02350000])
+late_t[-2] = np.array([5,2,13.97390000])
 # lim_d, lim_u = 2, COIII +0.01
 
 dic_late = {}
 for i,y in enumerate(late_t):
     ax[i,1].set_xlim(2, COIII +0.01)
     print(y)
-    all_fol = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%.0f/half_%.0f/'%(reductions[0],y[0],y[1])
+    # all_fol = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%.0f/half_%.0f/'%(reductions[0],y[0],y[1])
     all_fol = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/%s_reduction/cluster_spectra/ifu_%.0f/half_%.0f/'%('ABC',y[0],y[1])
 
     all_spec = np.loadtxt(all_fol + 'gns_lib_in_kmos_ifu%.0f_half%.0f.txt'%(y[0],y[1]))
@@ -319,6 +324,7 @@ ax2.set_xticklabels(tl, fontsize = 20)
 ax2.plot(lam_norm,sp_data_norm, alpha = 0)
 
 
+plt.savefig(pruebas + 'norm_spectra_young_and_late_2.png', dpi =300, bbox_inches = 'tight')
 
 
 

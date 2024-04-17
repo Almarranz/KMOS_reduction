@@ -6,7 +6,7 @@ Created on Thu Feb  8 10:26:23 2024
 @author: amartinez
 """
 
-# Normalization of selected spectra
+# Analysis of the P114 spectra
 
 import sys
 import glob
@@ -33,7 +33,6 @@ import re
 import numpy as np
 from astropy.stats import sigma_clip
 from numpy import mean
-from scipy.interpolate import UnivariateSpline
 
 # %%plotting pa    metres
 from matplotlib import rc
@@ -50,8 +49,8 @@ rcParams.update({'ytick.major.width': '1.5'})
 rcParams.update({'ytick.minor.pad': '7.0'})
 rcParams.update({'ytick.minor.size': '3.5'})
 rcParams.update({'ytick.minor.width': '1.0'})
-rcParams.update({'font.size': 10})
-rcParams.update({'figure.figsize':(10,10)})
+rcParams.update({'font.size': 20})
+rcParams.update({'figure.figsize':(30,30)})
 rcParams.update({
     "text.usetex": False,
     "font.family": "sans",
@@ -60,11 +59,8 @@ plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams.update({'figure.max_open_warning': 0})
 # %%
-# import matplotlib
-# matplotlib.use('WXAgg') 
-
 # Enable automatic plotting mode
-IPython.get_ipython().run_line_magic('matplotlib','auto')
+IPython.get_ipython().run_line_magic('matplotlib', 'auto')
 # IPython.get_ipython().run_line_magic('matplotlib', 'inline')
 
 cab_folder = '/Users/amartinez/Desktop/PhD/KMOS/P114_spectra/'
@@ -91,15 +87,14 @@ COI =  2.29322
 COII = 2.32246
 COIII = 2.3525
 Brg = 2.165
-HeI_ = 2.112
+He = 2.112
 HeII = 2.189
 N3 = 2.115
-C4 = 2.0785
-C4_ = 2.069
+C4 = 2.078
 
 # H2 = 2.12
-l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'HeI\n', 'HeII','$^{12}$CO(4,2)','NIII','CIV','CIV\n']
-lines = [HeI, COI, COII,Brg, HeI_, HeII,COIII, N3, C4,C4_]
+l_names = ['HeI', '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He\n', 'HeII','$^{12}$CO(4,2)','NIII','CIV']
+lines = [HeI, COI, COII,Brg, He, HeII,COIII, N3, C4]
 
 # l_names = [ '$^{12}$CO(2,0)', ' $^{12}$CO(3,1)\n','Br$\gamma$', 'He','$^{12}$CO(4,2)']
 # lines = [COI, COII,Brg, He,COIII]
@@ -111,7 +106,7 @@ ls_spec = np.loadtxt(pruebas + 'ls_young.txt')
 # colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f','#8c564b', '#e377c2','#7f7f7f']
 colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F']
 
-fig, ax = plt.subplots(1, 1, figsize = (15,9))
+fig, ax = plt.subplots(1, 1, figsize = (30,18))
 fig.suptitle('%s'%(reduction))
 ax2 = ax.twiny()
 # fig.subplots_adjust(hspace=0)
@@ -119,7 +114,7 @@ ax2 = ax.twiny()
 # lim_d, lim_u = 2.15, COIII +0.01
 lim_d, lim_u = 2, COIII +0.12#!!!
 
-norm_0, norm_1 = HeI, HeI_
+norm_0, norm_1 = HeI, He
 d_norm, u_norm =  2.2,2.28 #!!!
 snr_d, snr_u = 2.2356, 2.2661#!!!
 dic_yso = {}
@@ -127,23 +122,11 @@ dic_yso_snr = {}
 # for i in range(len(ls_spec)):
 ls_spec[0] = [7,2,13,50,10.84]
 
-norm_fold = '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/tramos_reduction/young_candidates/normalized_spline/'
-yso = 2#!!!
-leyendas = ['-']*7#!!!
-leyendas[0] = '\n'.join(('O4 If+','HeII abs\nHI emiss.\nNII and CIV lines','O4-5 Ia is the classification from Clarck et. al 2021'))
-leyendas[1] = '\n'.join(('O6V','HeII and BRg similar','NIII','CIV a little',
-                         'HeI gourda???'))
-leyendas[2] = '\n'.join(('O9 IIn or 07V', 'HI and little or none HeII','HeI'))
-leyendas[3] = '\n'.join(('B0Ia','Not HeII','HI(Brg)','HeI'))
-leyendas[4] = '\n'.join(('B0Ia','Not HeII','HI(Brg)','HeI'))
-leyendas[5] = '\n'.join(('?B 0-0.5-1','Strong HeI 2.058 in emission\nbut not HeI 2.112'))
-leyendas[6] = '\n'.join(('??'))
 
-smo = 1.5e-35  #!!!
-k_spl = 3
-for i in range(yso,yso+1):
-    
-    # ax.set_xlim(lim_d, lim_u)
+
+for i in range(1):
+
+    ax.set_xlim(lim_d, lim_u)
     ifu_sel = ls_spec[i][0]
     half_ifu = ls_spec[i][1]
     x, y = ls_spec[i][2], ls_spec[i][3]
@@ -156,50 +139,42 @@ for i in range(yso,yso+1):
     dic_yso_snr['Y%s'%(i+1)] = np.array([lam,sp_data])
     lam_selc = np.where((lam > norm_0) &(lam<norm_1))
     
-    # good = np.where((lam > lim_d) & (lam < lim_u))
-    # norm =  np.where((lam > d_norm) & (lam < u_norm))
-    # filtered = sigma_clip(sp_data[norm], sigma=1.5, maxiters=None,cenfunc=mean, masked=False, copy=False)
+    good = np.where((lam > lim_d) & (lam < lim_u))
+    norm =  np.where((lam > d_norm) & (lam < u_norm))
+    filtered = sigma_clip(sp_data[norm], sigma=1.5, maxiters=None,cenfunc=mean, masked=False, copy=False)
     # sp_data, lam  = sp_data[good], lam[good]
-    # sp_data = sp_data/np.mean(filtered)
+    sp_data = sp_data/np.mean(filtered)
     
-    # flat_flux = np.nanmean(sp_data[lam_selc])
+    
+    
+    flat_flux = np.nanmean(sp_data[lam_selc])
     # print(flat_flux)
     # ax[i].set_ylim(flat_flux*0.5, flat_flux*2)
     # ax.set_ylim(0, 2)
-      # ax[i].plot(lam,sp_data, label = 'x=%s\ny=%s'%(cab['X_FULL']+1,cab['Y_FULL']+1))
-      
-      
-    ax.plot(lam,sp_data  , label = 'Y%s (Ks = %.2f)'%(i+1,ls_spec[i][-1]), lw = 1, color = colorines[i])
-    
-    if yso == 0:
-        ax.plot(cab_p114[:,0], cab_p114[:,1]*5e-17, label = 'CAB P114\n(Ago2)', color = 'k', alpha = 0.5)
-        ax.plot(cab_p114_2[:,0], cab_p114_2[:,1]*4e-17, label = 'CAB P114\n(May)', color = 'g')
-    # ax.plot(cab_p114_3[:,0], cab_p114_3[:,1]-1, label = 'CAB P114\n(Ago1)', color = 'r')
-    # ax.tick_params(left = True, right = False , labelleft = True , 
-    #             labelbottom = False, bottom = False) 
+     # ax[i].plot(lam,sp_data, label = 'x=%s\ny=%s'%(cab['X_FULL']+1,cab['Y_FULL']+1))
+    ax.plot(lam,sp_data - i, label = 'Y%s (Ks = %.2f)'%(i+1,ls_spec[i][-1]), lw = 1, color = colorines[i])
+    ax.plot(cab_p114[:,0], cab_p114[:,1]-0.5, label = 'CAB P114\n(Ago2)')
+    ax.plot(cab_p114_2[:,0], cab_p114_2[:,1]-1.5, label = 'CAB P114\n(May)', color = 'g')
+    ax.plot(cab_p114_3[:,0], cab_p114_3[:,1]-1, label = 'CAB P114\n(Ago1)', color = 'r')
+    ax.tick_params(left = False, right = False , labelleft = False , 
+                labelbottom = False, bottom = False) 
     dic_yso['Y%s'%(i+1)] = np.array([lam,sp_data])
     
-    # ax.set_ylabel('Normalized flux', fontsize = 25)
+    ax.set_ylabel('Normalized flux', fontsize = 25)
     
     for l in lines:
         ax.axvline(l, color = 'grey', alpha = 0.1, ls = 'dashed', zorder = 0) 
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize = 10 )
-    
-ax.tick_params(left = True, right = False , labelleft = True , 
+ax.tick_params(left = False, right = False , labelleft = False , 
               labelbottom = True, bottom = True, labelsize = 20) 
-
 ax.set_xlabel('$\lambda (\mu m)$', fontsize = 25)    
-
 # ax2 = ax.twiny()
 ax2.set_xticks(lines)
-
-# ax2.set_xlim(lim_d, lim_u)
+ax2.set_xlim(lim_d, lim_u)
 tl = l_names
-ax2.fmt_xdata = lambda x: f'{x:.3f}' # This is because a bug that happen when using set_xticklabels, that does not allow the x coordinate to appear in the toolbar when using auto mode
 ax2.set_xticklabels(tl, fontsize = 12)
-
 ax2.plot(lam,sp_data, alpha = 0)
-# ax.set_ylim(-1*2,2)
+ax.set_ylim(-1*2,2)
 
 chunk = 0     
 no_lines = []   
@@ -207,8 +182,7 @@ continuum = []
 continuum_inds = []
 chunk_ind = []
 delete_inds = []
-select_wave = []
-
+deselect = []
 def vertical(event):
     global x2, y2, chunk, no_lines, continuum_inds  # Use global variables
     if event.dblclick and event.button ==1:
@@ -230,8 +204,8 @@ def vertical(event):
             chunk +=1
             print('chunk_ind', chunk_ind)
             print('%.4f %.4f'%(lam[ind1][0],lam[ind2][0]))
-            select_wave.append((lam[ind1][0],lam[ind2][0]))
-            np.savetxt(pruebas + 'continuum_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(ifu_sel, half_ifu, x, y),select_wave, fmt = '%.4f')
+            deselect.append((lam[ind1][0],lam[ind2][0]))
+            np.savetxt(pruebas + 'lines_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(ifu_sel, half_ifu, x, y),deselect, fmt = '%.4f')
     if event.dblclick and event.button ==3:
             del continuum[-1]
             del continuum_inds[-1]
@@ -255,7 +229,7 @@ def re_plot(event):
         ax.cla()
         ax2.cla()
         for i in range(len(ls_spec)):
-            # ax.set_xlim(lim_d, lim_u)
+            ax.set_xlim(lim_d, lim_u)
             ifu_sel = ls_spec[i][0]
             half_ifu = ls_spec[i][1]
             x, y = ls_spec[i][2], ls_spec[i][3]
@@ -279,11 +253,11 @@ def re_plot(event):
             # ax[i].set_ylim(flat_flux*0.5, flat_flux*2)
             # ax.set_ylim(0, 2)
              # ax[i].plot(lam,sp_data, label = 'x=%s\ny=%s'%(cab['X_FULL']+1,cab['Y_FULL']+1))
-            ax.plot(lam,sp_data - 0, label = 'Y%s (Ks = %.2f)'%(i+1,ls_spec[i][-1]), lw = 1, color = colorines[i])
-            ax.tick_params(left = True, right = False , labelleft = False , 
+            ax.plot(lam,sp_data - i, label = 'Y%s (Ks = %.2f)'%(i+1,ls_spec[i][-1]), lw = 1, color = colorines[i])
+            ax.tick_params(left = False, right = False , labelleft = False , 
                         labelbottom = False, bottom = False) 
             
-            # ax.set_ylabel('Normalized flux', fontsize = 25)
+            ax.set_ylabel('Normalized flux', fontsize = 25)
             
             for l in lines:
                 ax.axvline(l, color = 'grey', alpha = 0.5, ls = 'dashed') 
@@ -292,81 +266,25 @@ def re_plot(event):
                       labelbottom = True, bottom = True, labelsize = 20) 
         ax.set_xlabel('$\lambda (\mu m)$', fontsize = 25)    
         ax2.set_xticks(lines)
-        # ax2.set_xlim(lim_d, lim_u)
+        ax2.set_xlim(lim_d, lim_u)
         tl = l_names
         ax2.set_xticklabels(tl, fontsize = 12)
         ax2.plot(lam,sp_data, alpha = 0)
-        # ax.set_ylim(-1*len(ls_spec),2)
-        
-    
-        
-def plot_poly(event):
-    # smo = 3.3e-34  #!!!
-    # k_spl = 3
-    if event.key == 'e':
-        select_wave = np.loadtxt(pruebas + 'continuum_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(ifu_sel, half_ifu, x, y))
-        sel_x = np.concatenate([lam[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        sel_y = np.concatenate([sp_data[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        pol_deg = 4
-        z = np.polyfit(sel_x, sel_y, pol_deg, rcond=None, full=False, w=None, cov=False)
-        poly = np.poly1d(z)
-        # ax.plot(sel_x, sel_y, color ='blue')
-        cont_flux = poly(lam)
-        fig1, ax1 = plt.subplots(1,1)
-        ax1.set_title('POLYNOMIAL\n(degree = %s)'%(pol_deg))
-        ax1.plot(lam,sp_data/cont_flux, label = 'Y%s (Ks = %.2f)'%(i+1,ls_spec[i][-1]), lw = 1, color = colorines[i])
-        ax1.plot(cab_p114[:,0], cab_p114[:,1]-0.5, label = 'CAB P114\n(Ago2)', color = 'k', alpha = 0.5)
-        # ax1.grid()
-        ax.plot(sel_x, sel_y*1.5, color ='blue')
-        # ax1.plot(lam, cont_flux, color = 'r')
-    if event.key == 'r':
-        select_wave   = np.loadtxt(pruebas + 'continuum_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(ifu_sel, half_ifu, x, y))
-        sel_x = np.concatenate([lam[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        sel_y = np.concatenate([sp_data[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        
-        normfunc = UnivariateSpline(sel_x, sel_y, s=smo, k = k_spl)
-        normfunction = normfunc(lam)
-        ax.plot(lam, normfunction, "k")
-        if yso == 0:
-            ax.set_ylim(2e-17, 6.3e-17)
-        fig1, ax1 = plt.subplots(1,1)
-        ax21 = ax1.twiny()
-        ax21.set_xticks(lines)
-        tl = l_names
-        ax21.fmt_xdata = lambda x: f'{x:.3f}' # This is because a bug that happen when using set_xticklabels, that does not allow the x coordinate to appear in the toolbar when using auto mode
-        ax21.set_xticklabels(tl, fontsize = 12)
-        ax21.plot(lam,sp_data, alpha = 0)
-        for l in lines:
-            ax21.axvline(l, color = 'grey', alpha = 0.4, ls = 'dashed', zorder = 0) 
-        
-        ax1.set_title('SPLINE\n(smoth = %s, degree = %s)'%(smo, k_spl))
-        ax1.plot(lam,sp_data/normfunction, label = leyendas[yso], lw = 1, color = colorines[i])
-        ax1.legend(loc = 1)
-        if yso == 0:
-            ax1.plot(cab_p114[:,0], cab_p114[:,1]-0.5, label = 'CAB P114\n(Ago2)', color = 'k', alpha = 0.5)
-        for s in range(len(select_wave)):
-            ax1.axvline(select_wave[s][0], color = 'grey', alpha = 0.2)
-            ax1.axvline(select_wave[s][1], color = 'grey', alpha = 0.2)
-            ax1.axvspan(select_wave[s][0],select_wave[s][1],color = 'green', alpha = 0.2)    
-        # ax1.grid()
-    if event.key == 'o':
-        select_wave   = np.loadtxt(pruebas + 'continuum_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(ifu_sel, half_ifu, x, y))
-        sel_x = np.concatenate([lam[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        sel_y = np.concatenate([sp_data[(lam >= start) & (lam <= end)] for start, end in select_wave])
-        normfunc = UnivariateSpline(sel_x, sel_y, s=smo, k = k_spl)
-        normfunction = normfunc(lam)
-        wave_tosave = (lam >np.min(select_wave) ) & (lam < np.max(select_wave))
-        lam_tosave = lam[wave_tosave]
-        flux_tosave = sp_data[wave_tosave]/normfunction[wave_tosave]
-        np.savetxt(norm_fold + 'yso%s_norm_ifu%.0f_half%.0f_%.0f_%.0f.txt'%(yso,ifu_sel, half_ifu, x, y),
-                   np.array([lam_tosave, flux_tosave]).T, fmt = '%.8f', header = 'Smooth = %s, degree = %s'%(smo, k_spl))
+        ax.set_ylim(-1*len(ls_spec),2)
         
         
-    
 cidv = fig.canvas.mpl_connect('button_press_event',vertical)
 cid_snr = fig.canvas.mpl_connect('key_press_event',snr_cal)
 cid_re = fig.canvas.mpl_connect('key_press_event',re_plot)
-cid_poly = fig.canvas.mpl_connect('key_press_event',plot_poly)
+
+
+
+
+
+
+
+
+
 
 
 

@@ -205,7 +205,7 @@ def extract_spec(cube,y,x):
     # hdu_sky = fits.open(pruebas  + 'sky_ifu%s_half%s.fits'%(ifu_sel,half_ifu))
     # sky_data = hdu_sky[0].data
     # spec_mean = spec_mean - sky_data
-    ax.scatter(mask[1],mask[0],color = 'r')
+    ax.scatter(mask[1],mask[0],color = 'green')
     
     # For normalizing, uncommnet
 # =============================================================================
@@ -223,12 +223,12 @@ def extract_spec(cube,y,x):
 def update_plot(x,y):
     x = int(np.rint(x))
     y = int(np.rint(y))
-    plt.scatter(x, y, color='red', marker='x', s=100)  # Customize the marker style
+    plt.scatter(x, y, color='blue', marker='x', s=100)  # Customize the marker style
     # square = Rectangle((x - wide/2-0.5, y - wide/2-0.5), wide, wide, linewidth=1, edgecolor='r', facecolor='none')
-    circle = Circle((x, y),w, facecolor = 'none', edgecolor = 'r', linewidth=1)
+    circle = Circle((x, y),w, facecolor = 'none', edgecolor = 'green', linewidth=1)
     # ax.add_patch(square)
     ax.add_patch(circle)
-    ax.text(x-w,y-w-1,'%.0f,%.0f'%(x,y), color = 'r',fontsize = 15)
+    ax.text(x-w,y-w-1,'%.0f,%.0f'%(x,y), color = 'green',fontsize = 15)
     plt.draw()  # Redraw the plot with the updated point
 
 
@@ -238,6 +238,9 @@ lam = np.array([cab['CRVAL3']+cab['CDELT3']*i for i in range(cab['NAXIS3'])])
 
 
 fig2, ax2 = plt.subplots(1,1,figsize =(20,10))
+props = dict(boxstyle='round', facecolor='grey', alpha=0.5)
+ax2.text(0.05, 0.95, 'D-click left: select interval limitis\nD-click righ: delete interval\n"g": save continuum', transform=ax.transAxes, fontsize=14,
+        verticalalignment='top', bbox=props)
 
 HeI = 2.058
 COI =  2.29322
@@ -317,7 +320,7 @@ def vertical(event):
     #     ax2.axvline(event.xdata)
 
 def save_continuum(event):
-    if event.key == 's':
+    if event.key == 'g':
         cont = np.concatenate(continuum)
         cont_id = np.concatenate(continuum_inds)
         chunk_id = np.concatenate(chunk_ind)

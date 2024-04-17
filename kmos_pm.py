@@ -168,7 +168,9 @@ for i in range(len(gns_young_all)):
     colorines.append("#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
 talla = [i*1 for i in gns_young_all[:,4]]
 # sizs = np.array(np.where(np.array(sizs)< 15,2,0.2))
-colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F','pink']
+# colorines = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F','pink']
+colorines = ['#ff7f0e','#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf', '#67AFAD', '#B018CC', '#D24FBD', '#A12322', '#4CC351', '#54DF4F', '#7389D2', '#898EE0', '#289C88', '#18EAA4', '#9ECC27', '#71A317', '#421256', '#A23C97', '#44302F','pink']
+
 # defa_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2','#7f7f7f', '#bcbd22', '#17becf']
 
 
@@ -220,17 +222,36 @@ ax[0].axis('scaled')
 ax[1].scatter(gns_all[:,3]-gns_all[:,4],gns_all[:,4], alpha = alp)
 ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4][bri],
               edgecolor = 'k',c =np.array(colorines)[bri],s = y_size + 40,marker = '^')
+
+
+# %%
 # Plot isochrone
 # At the end of the script there is some line to build ischrones.
 # In order to make it work, you must activate the base conda enviroment
-# =============================================================================
 # age = np.log10(2.5e6) 
-# AKs = 1.60
-# iso = fits.open('/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/iso_%.2f_%.2f_08200_p00.fits'%(age, AKs))
-# good_Ks = np.where(iso[1].data['m_hawki_Ks']<max(gns_all[:,4]  ))
-# ax[1].plot(iso[1].data['m_hawki_H'][good_Ks]-iso[1].data['m_hawki_Ks'][good_Ks],iso[1].data['m_hawki_Ks'][good_Ks])
-# =============================================================================
+age = np.log10(5e6) 
+AKs = 1.73
+iso = fits.open('/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/iso_%.2f_%.2f_08200_p00.fits'%(age, AKs))
+good_Ks = np.where(iso[1].data['m_hawki_Ks']<max(gns_all[:,4]  ))
+ax[1].plot(iso[1].data['m_hawki_H'][good_Ks]-iso[1].data['m_hawki_Ks'][good_Ks],iso[1].data['m_hawki_Ks'][good_Ks])
+ax[1].invert_yaxis()
+# %%
+gns_gal = SkyCoord(ra = gns_all[:,0], dec = gns_all[:,1], unit = 'degree').galactic
+clus_gal = SkyCoord(ra = gns_young_all[:,0][bri], dec = gns_young_all[:,1][bri], unit = 'degree').galactic
+fig, ax = plt.subplots(1,1)
+# ax.scatter(gns_all[:,0], gns_all[:,1], )
+# ax.scatter(gns_young_all[:,0], gns_young_all[:,1] )
+ax.scatter(gns_gal.l, gns_gal.b )
+# ax.scatter(gns_young_all[:,0][bri], gns_young_all[:,1][bri])
+ax.scatter(clus_gal.l, clus_gal.b, edgecolor = 'k')
+ax.invert_xaxis()
+ax.set_xlabel('l (º)')
+ax.set_ylabel('b (º)')
 
+
+
+sys.exit(232)
+# %%
 
 # ax[1].scatter(gns_young_all[:,3]-gns_young_all[:,4],gns_young_all[:,4],
 #               edgecolor = 'k',c =np.array(colorines),s = y_size + 40,marker = '^')
@@ -695,7 +716,7 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
+# plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
 # 
 # sys.exit(423)
 # ax.
@@ -834,6 +855,112 @@ ax[0].invert_xaxis()
 ax[0].invert_yaxis()
 ax[1].invert_xaxis()
 ax[1].invert_yaxis()
+# %%
+fig, ax = plt.subplots(1,1,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
+
+false_color = ['#1f77b4', '#1f77b4','#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2']
+# r = Regions.read(pruebas + 'Brg_region_coord.reg',format='ds9')
+r = Regions.read(pruebas + 'Brg_region.reg',format='ds9')
+r_ifu=  Regions.read(pruebas + 'ifu_half.reg',format='ds9')
+r_ifu_w =  Regions.read(pruebas + 'ifu_whole.reg',format='ds9')
+r_ifu_s =  Regions.read(pruebas + 'ifu_single.reg',format='ds9')
+r_comp = Regions.read(pruebas + 'compass_Kmos.reg', format = 'ds9')
+
+ax.add_patch(Rectangle((r_ifu[0].center.x-r_ifu[0].width/2
+                           ,r_ifu[0].center.y-r_ifu[0].height/2), 
+                          r_ifu[0].width, r_ifu[0].height, fill = False,lw = 3))
+
+ax.add_patch((Rectangle((r_ifu_w[0].center.x-r_ifu_w[0].width/2
+                           ,r_ifu_w[0].center.y-r_ifu_w[0].height/2), 
+                          r_ifu_w[0].width, r_ifu_w[0].height, fill = False,lw = 3, ls = 'dashed')))
+
+ax.add_patch((Rectangle((r_ifu_s[0].center.x-r_ifu_s[0].width/2
+                           ,r_ifu_s[0].center.y-r_ifu_s[0].height/2), 
+                          r_ifu_s[0].width, r_ifu_s[0].height, fill = False,lw = 3, color = 'red')))
+
+# arrow = FancyArrowPatch((61.395297,64.949858), (286.46498,46.840154), mutation_scale=15, color='black', label='North')
+# ax[0].add_patch(arrow)
+# for i in range(11):
+#     ax[0].plot(r[i].vertices.x,r[i].vertices.y, color = 'white',zorder = 1,alpha = 1,lw =3,)
+
+
+lon = ax.coords[0]
+lat = ax.coords[1]
+
+
+
+
+
+
+
+lon.set_ticks(spacing=5. * u.arcsec)
+lat.set_ticks(spacing=7. * u.arcsec)
+ax.tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True, fontsize = 20)
+ima1 = ax.imshow(im_data, vmin=-0.011e-16, vmax=0.136e-16, origin='lower', cmap='Greys', label ='KMOS')
+ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], c = np.array(colorines)[bri],s = sizs[bri]*2,
+              edgecolor = 'k', marker = '^')
+
+
+lon.set_ticks_visible(True)
+lon.set_ticklabel_visible(True)
+lon.set_ticklabel(fontsize = l_size)
+ax.coords[0].set_axislabel('RA (J2000)',fontsize = l_size)
+ax.coords[1].set_axislabel('Dec (J2000)',fontsize = l_size)
+xticks = ax.get_xticks()
+yticks = ax.get_yticks()
+lat.set_ticklabel(rotation='vertical', fontsize = l_size)
+ax.tick_params(length=4, width=0.5)
+ax.xaxis.set_tick_params(labelsize=15)
+ax.yaxis.set_tick_params(labelsize=15)
+ax.invert_xaxis()
+ax.invert_yaxis()
+# plt.savefig(pruebas + 'im_map.png', dpi =300, bbox_inches = 'tight')
+
+# %%
+fig, ax = plt.subplots(1,1,subplot_kw={'projection': mapa}, figsize = (12,12))  # Adjust the figsize as needed
+
+
+lon1 = ax.coords[0]
+lat1 = ax.coords[1]
+lon1.set_ticks(spacing=5. * u.arcsec)
+lat1.set_ticks(spacing=7. * u.arcsec)
+ax.tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
+
+ax.imshow(brg_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
+
+ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri],  c = np.array(colorines)[bri],s = sizs[bri]*2,
+              edgecolor = 'k', marker = '^')
+
+# ax[0].grid()
+l_size = 20
+
+# lat.set_ticklabel_visible(True)
+lat1.set_ticklabel_visible(True)
+lat1.set_ticks_visible(True)
+lat1.set_ticklabel(rotation='vertical',fontsize = l_size)
+lon1.set_ticklabel(fontsize = l_size)
+
+ax.coords[0].set_axislabel('RA (J2000)',fontsize = l_size)
+ax.coords[1].set_axislabel('Dec (J2000)',fontsize = l_size)
+# ax.coords[0].set_axislabelabel('RA (J2000)',fontsize = l_size)
+# ax.coords[1].set_axislabel('Dec (J2000)',fontsize = l_size)
+
+
+print("X-axis tick locations:", xticks)
+print("Y-axis tick locations:", yticks)
+
+
+ax.tick_params(length=4, width=0.5)
+
+
+ax.xaxis.set_tick_params(labelsize=15)
+ax.yaxis.set_tick_params(labelsize=15)
+
+
+ax.invert_xaxis()
+ax.invert_yaxis()
+# plt.savefig(pruebas + 'im_brg.png', dpi =300, bbox_inches = 'tight')
+# %%
 
 # sys.exit(806)
 # plt.savefig(pruebas + 'im_plus_brg.png', dpi =300, bbox_inches = 'tight')
