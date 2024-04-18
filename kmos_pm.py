@@ -224,12 +224,12 @@ ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4]
               edgecolor = 'k',c =np.array(colorines)[bri],s = y_size + 40,marker = '^')
 
 
-# %%
+# %
 # Plot isochrone
-# Around line ~300 there is some line to build ischrones.
+# Around line ~300 there is some lines to build ischrones.
 # In order to make it work, you must activate the base conda enviroment
 # age = np.log10(2.5e6) 
-age = np.log10(1e6) 
+age = np.log10(4e6) 
 # age = 6.52
 p00 = 3
 AKs = 1.74
@@ -338,146 +338,160 @@ ax[2].yaxis.set_tick_params(labelsize=l_size )
 # %%
 # This bit is for making isochrones with SPISEA. You have to swhitch the conda
 # enviroment to  'base' for it to work
-# =============================================================================
-# import spisea
-# from spisea import synthetic, evolution, atmospheres, reddening, ifmr
-# from spisea.imf import imf, multiplicity
-# =============================================================================
+import spisea
+from spisea import synthetic, evolution, atmospheres, reddening, ifmr
+from spisea.imf import imf, multiplicity
 
 # %%
 # Load this only one, becouse it takes long
 # With coeficients
 # This gives you AKs and its sigma: 1.73 and 0.07
-# =============================================================================
-# gns_ext = '/Users/amartinez/Desktop/PhD/Libralato_data/extinction_maps/'
-# Aks_gns = pd.read_fwf(gns_ext + 'central.txt', sep =' ',header = None)
-# AKs_np = Aks_gns.to_numpy()#TODO
-# center = np.where(AKs_np[:,6]-AKs_np[:,8] > 1.3)#TODO
-# AKs_center =AKs_np[center]#TODO
-# 
-# AKs_coord = SkyCoord(ra=AKs_center[:,0]*u.degree, dec=AKs_center[:,2]*u.degree,frame ='icrs', equinox = 'J2000', obstime = 'J2015.5')
-# 
-# clus_coord =  SkyCoord(ra=gns_young_all[:,0][bri]*u.degree, dec=gns_young_all[:,1][bri]*u.degree)
-# idx = clus_coord.match_to_catalog_sky(AKs_coord)
-# validas = np.where(idx[1]<0.5*u.arcsec)
-# gns_match = AKs_center[idx[0][validas]]
-# AKs_clus_all =[] 
-# # %
-# for member in range(len(gns_match)):    
-#     if gns_match[member,18] != '-':
-#         AKs_clus_all.append(float(gns_match[member,18]))
-# ind =np.where(np.array(AKs_clus_all) >1)
-# AKs_clus_all = np.array(AKs_clus_all)[ind]
-# AKs_clus = np.nanmean(AKs_clus_all)
-# print(AKs_clus)
-# =============================================================================
+gns_ext = '/Users/amartinez/Desktop/PhD/Libralato_data/extinction_maps/'
+Aks_gns = pd.read_fwf(gns_ext + 'central.txt', sep =' ',header = None)
+AKs_np = Aks_gns.to_numpy()#TODO
+center = np.where(AKs_np[:,6]-AKs_np[:,8] > 1.3)#TODO
+AKs_center =AKs_np[center]#TODO
+
+AKs_coord = SkyCoord(ra=AKs_center[:,0]*u.degree, dec=AKs_center[:,2]*u.degree,frame ='icrs', equinox = 'J2000', obstime = 'J2015.5')
+
+clus_coord =  SkyCoord(ra=gns_young_all[:,0][bri]*u.degree, dec=gns_young_all[:,1][bri]*u.degree)
+idx = clus_coord.match_to_catalog_sky(AKs_coord)
+validas = np.where(idx[1]<0.5*u.arcsec)
+gns_match = AKs_center[idx[0][validas]]
+AKs_clus_all =[] 
+# %
+for member in range(len(gns_match)):    
+    if gns_match[member,18] != '-':
+        AKs_clus_all.append(float(gns_match[member,18]))
+ind =np.where(np.array(AKs_clus_all) >1)
+AKs_clus_all = np.array(AKs_clus_all)[ind]
+AKs_clus = np.nanmean(AKs_clus_all)
+print(AKs_clus)
+
 
 # %%
 # This generates a cluster
-# =============================================================================
-# iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
-# 
-# evo_model = evolution.MISTv1() 
-# atm_func = atmospheres.get_merged_atmosphere
-# red_law = reddening.RedLawNoguerasLara18()
-# filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
-# 
-# 
-# 
-# dist = 8200 
-# AKs = 1.73
-# 
-# 
-# metallicity_ls = [0.0,0.3]
-# logAge_ls = [np.log10(0.0025*10**9.),np.log10(0.005*10**9.),np.log10(0.0075*10**9.),np.log10(0.01*10**9.)]
-# imf_set_ls = ['topheavy','Kroupa']
-# 
-# # metallicity_ls = [0.0]
-# # logAge_ls = [np.log10(0.005*10**9.)]
-# # imf_set_ls = ['topheavy']
-# 
-# imf_multi = multiplicity.MultiplicityUnresolved()
-# massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
-# # if imf_set == 'Kroupa':
-# #     powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
-# # elif imf_set == 'topheavy':
-# #     powers = np.array([-1.8, -1.8, -1.8]) 
-# 
-# # aproach referes to the initial mass for the simulations. If 'top' we choose a high mass and then subtract, if 'bottom' we choose a low mass and the add
-# 
-# aproach_ls = ['bottom', 'top']
-# K_model = gns_young_all[:,4][bri]
-# K = K_model
-# stad_mass = []
-# tb_ls = []
-# count_loop = 0
-# bottom_mass = 0.5*1e3
-# top_mass = 3.5*1e3
-# mass_increment = 50
-# for metallicity in metallicity_ls:
-#     for logAge in logAge_ls:
-#         for imf_set in imf_set_ls:
-#             if imf_set == 'Kroupa':
-#                 powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
-#             elif imf_set == 'topheavy':
-#                 powers = np.array([-1.8, -1.8, -1.8]) 
-#             my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
-#             
-#             iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
-#                                             evo_model=evo_model, atm_func=atm_func,
-#                                             red_law=red_law, filters=filt_list,
-#                                                 iso_dir=iso_dir)
-#             all_loops = 1000
-#             for loop in range(all_loops):
-#                 tb_ind = np.random.choice([0,1])
-#                 aproach = aproach_ls[tb_ind]
-#                 count_loop +=1
-#                 if aproach == 'bottom':
-#                     M_clus = bottom_mass*u.Msun
-#                     suma = 1
-#                 elif aproach == 'top':
-#                     M_clus = top_mass*u.Msun
-#                     suma = -1
-#                 max_stars = len(K_model)*2
-#                 porcentaje = 0
-#                 print('---------')
-#                 print('loop %s out of %s'%(count_loop,all_loops*len(metallicity_ls)*len(logAge_ls)*len(imf_set_ls)))
-#             
-#                 
-#                 while  max_stars != len(K_model)+0:
-#                     
-#                     # M_clus = 2*10**4*u.Msun
-#                     # mass = M_clus.value +suma*0.1*porcentaje*M_clus.value
-#                     mass = M_clus.value + suma*mass_increment*porcentaje
-#                     dAks = 0.1
-#                     # dAks = 0.06
-#                     # print(mass)
-#                     np.object = object    
-#                     cluster = synthetic.ResolvedClusterDiffRedden(iso, my_imf, mass,dAks)
-#                     cluster_ndiff = synthetic.ResolvedCluster(iso, my_imf, mass)
-#                     clus = cluster.star_systems
-#                     clus_ndiff = cluster_ndiff.star_systems
-#                     
-#                     # max_mass = np.where((clus_ndiff['m_hawki_Ks']>min(K))&(clus_ndiff['m_hawki_Ks']<max(K)))
-#                     max_mass = np.where((clus['m_hawki_Ks']>min(K_model))&(clus['m_hawki_Ks']<max(K_model)))
-#                     
-#                     # max_stars = len(clus_ndiff['m_hawki_Ks'][max_mass])
-#                     max_stars = len(clus['m_hawki_Ks'][max_mass])
-#                     
-#                     porcentaje +=1
-#                     if porcentaje*mass_increment >= top_mass - 5*mass_increment :
-#                         print('BREEEEEAAAAAKKKKK!!!!!')
-#                         mass = np.mean(stad_mass)
-#                         break
-#                     # print(mass,count_loop)
-#                     
-#                 print(mass,max_stars,aproach)
-#                 stad_mass.append(mass)
-#                 tb_ls.append(tb_ind)
-# np.savetxt(pruebas + 'mass_stat_loops%s.txt'%(all_loops),np.c_[np.array(stad_mass),np.array(tb_ls)], fmt = '%.0f')
-# # print('loop mass',mass )
-# sys.exit(442)
-# =============================================================================
+iso_dir = '/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/'
+
+evo_model = evolution.MISTv1() 
+atm_func = atmospheres.get_merged_atmosphere
+red_law = reddening.RedLawNoguerasLara18()
+filt_list = ['hawki,J', 'hawki,H', 'hawki,Ks']
+# %
+# This generates isochrones
+age_iso = np.log10(np.arange(1e6,11e6,1e6))
+Aks_iso = np.arange(1.6,1.9,0.1)
+dist = 8200
+metallicity = 0.3
+for edad in age_iso:
+    for ext in Aks_iso:
+        iso =  synthetic.IsochronePhot(edad, ext, dist, metallicity=metallicity,
+                                        evo_model=evo_model, atm_func=atm_func,
+                                        red_law=red_law, filters=filt_list,
+                                            iso_dir=iso_dir)
+        
+sys.exit(382)
+# %%
+my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+
+iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                                evo_model=evo_model, atm_func=atm_func,
+                                red_law=red_law, filters=filt_list,
+                                    iso_dir=iso_dir)
+
+dist = 8200 
+AKs = 1.73
+
+
+metallicity_ls = [0.0,0.3]
+logAge_ls = [np.log10(0.0025*10**9.),np.log10(0.005*10**9.),np.log10(0.0075*10**9.),np.log10(0.01*10**9.)]
+imf_set_ls = ['topheavy','Kroupa']
+
+# metallicity_ls = [0.0]
+# logAge_ls = [np.log10(0.005*10**9.)]
+# imf_set_ls = ['topheavy']
+
+imf_multi = multiplicity.MultiplicityUnresolved()
+massLimits = np.array([0.2, 0.5, 1, 120]) # Define boundaries of each mass segement
+# if imf_set == 'Kroupa':
+#     powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+# elif imf_set == 'topheavy':
+#     powers = np.array([-1.8, -1.8, -1.8]) 
+
+# aproach referes to the initial mass for the simulations. If 'top' we choose a high mass and then subtract, if 'bottom' we choose a low mass and the add
+
+aproach_ls = ['bottom', 'top']
+K_model = gns_young_all[:,4][bri]
+K = K_model
+stad_mass = []
+tb_ls = []
+count_loop = 0
+bottom_mass = 0.5*1e3
+top_mass = 3.5*1e3
+mass_increment = 50
+for metallicity in metallicity_ls:
+    for logAge in logAge_ls:
+        for imf_set in imf_set_ls:
+            if imf_set == 'Kroupa':
+                powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+            elif imf_set == 'topheavy':
+                powers = np.array([-1.8, -1.8, -1.8]) 
+            my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+            
+            iso =  synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                                            evo_model=evo_model, atm_func=atm_func,
+                                            red_law=red_law, filters=filt_list,
+                                                iso_dir=iso_dir)
+            all_loops = 1000
+            for loop in range(all_loops):
+                tb_ind = np.random.choice([0,1])
+                aproach = aproach_ls[tb_ind]
+                count_loop +=1
+                if aproach == 'bottom':
+                    M_clus = bottom_mass*u.Msun
+                    suma = 1
+                elif aproach == 'top':
+                    M_clus = top_mass*u.Msun
+                    suma = -1
+                max_stars = len(K_model)*2
+                porcentaje = 0
+                print('---------')
+                print('loop %s out of %s'%(count_loop,all_loops*len(metallicity_ls)*len(logAge_ls)*len(imf_set_ls)))
+            
+                
+                while  max_stars != len(K_model)+0:
+                    
+                    # M_clus = 2*10**4*u.Msun
+                    # mass = M_clus.value +suma*0.1*porcentaje*M_clus.value
+                    mass = M_clus.value + suma*mass_increment*porcentaje
+                    dAks = 0.1
+                    # dAks = 0.06
+                    # print(mass)
+                    np.object = object    
+                    cluster = synthetic.ResolvedClusterDiffRedden(iso, my_imf, mass,dAks)
+                    cluster_ndiff = synthetic.ResolvedCluster(iso, my_imf, mass)
+                    clus = cluster.star_systems
+                    clus_ndiff = cluster_ndiff.star_systems
+                    
+                    # max_mass = np.where((clus_ndiff['m_hawki_Ks']>min(K))&(clus_ndiff['m_hawki_Ks']<max(K)))
+                    max_mass = np.where((clus['m_hawki_Ks']>min(K_model))&(clus['m_hawki_Ks']<max(K_model)))
+                    
+                    # max_stars = len(clus_ndiff['m_hawki_Ks'][max_mass])
+                    max_stars = len(clus['m_hawki_Ks'][max_mass])
+                    
+                    porcentaje +=1
+                    if porcentaje*mass_increment >= top_mass - 5*mass_increment :
+                        print('BREEEEEAAAAAKKKKK!!!!!')
+                        mass = np.mean(stad_mass)
+                        break
+                    # print(mass,count_loop)
+                    
+                print(mass,max_stars,aproach)
+                stad_mass.append(mass)
+                tb_ls.append(tb_ind)
+np.savetxt(pruebas + 'mass_stat_loops%s.txt'%(all_loops),np.c_[np.array(stad_mass),np.array(tb_ls)], fmt = '%.0f')
+# print('loop mass',mass )
+sys.exit(442)
 # %
 
 
@@ -689,7 +703,7 @@ esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_grou
 # Load your FITS file and create the WCS
 # fits_file = get_pkg_data_filename('one_ABC.fits')
 image_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
-image_data = np.squeeze(image_data) 
+# image_data = np.squeeze(image_data) 
 mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 
 # fig, ax = plt.subplots(subplot_kw={'projection': mapa})  # Adjust the figsize as needed
@@ -698,9 +712,13 @@ fig = plt.figure()  # Adjust the figsize as needed
 
 ax = plt.subplot(projection=mapa)
 
+# ax.invert_xaxis()
+# ax.invert_yaxis()
 lon = ax.coords[0]
 lat = ax.coords[1]
-lon.grid(color='k', alpha=0.5, linestyle='solid')
+# lon.grid(color='k', alpha=0.5, linestyle='solid')
+# lat.grid(color='k', alpha=0.5, linestyle='solid')
+
 lon.set_ticks(spacing=5. * u.arcsec)
 lat.set_ticks(spacing=5. * u.arcsec)
 ax.tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
@@ -716,12 +734,12 @@ ax.scatter(young_to_kpix[0][bri][m23_young],young_to_kpix[1][bri][m23_young], s 
 ax.legend(fontsize = 8, loc = 1)
 ax.add_patch(Rectangle((0, 440), 650, 400, alpha = 0.5, color = 'k',fill = False, lw =2,ls ='dashed',label = 'ID'))
 # ax.invert_xaxis()
-# ax.invert_yaxis()
+ax.invert_yaxis()
 
-ax.grid()
+
 ax.axis('scaled')
-lon.set_ticks_visible(True)
-lon.set_ticklabel_visible(True)
+# lon.set_ticks_visible(True)
+# lon.set_ticklabel_visible(True)
 # lat.set_ticklabel_visible(True)
 # lat.set_ticklabel_visible(True)
 # lat.set_ticks_visible(False)
@@ -733,16 +751,18 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-l_pla = [359.999,359.97]
+l_pla = [359.9,359.99]
 b_ = 0.000
 b_pla = [b_,b_]
 gal_pla = SkyCoord(l = l_pla, b = b_pla, unit = 'degree', frame = 'galactic').fk5
 np.savetxt(pruebas  + 'gal_pla_coor.txt',np.array([gal_pla.ra.value,gal_pla.dec.value]).T)
 gal_to_kpix = wcs.wcs_world2pix(gal_pla.ra,gal_pla.dec,1)
 ax.set_xlim(max(clus_to_kpix[0])+30,min(clus_to_kpix[0])-20)
-ax.plot(gal_to_kpix[0], gal_to_kpix[1],
+ax.plot(gal_to_kpix[0]*-1, gal_to_kpix[1],
         alpha = 0.7, color = 'k', ls = '-.')
+# ax.grid()
 plt.savefig(pruebas + 'cluster_brg_gpla.png', dpi =300, bbox_inches = 'tight')
+
 # 
 # sys.exit(423)
 # ax.
@@ -751,9 +771,9 @@ image_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
 mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
 # fig, ax = plt.subplots(1,1)
 ax = plt.subplot(projection=mapa)
-ax.imshow(image_data)
+ax.imshow(image_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
 ax.invert_xaxis()
-ax.invert_yaxis()
+# ax.invert_yaxis()
 ax.scatter(clus_to_kpix[0][~brilli], clus_to_kpix[1][~brilli],c= '#1f77b4', s =15, label = 'Mar23 (Ks > %s)'%(mag_lim))
 ax.scatter(clus_to_kpix[0][brilli], clus_to_kpix[1][brilli], facecolor = 'none', edgecolors= '#1f77b4', s = 70,alpha = 1, label = 'Mar23 (Ks < %s)'%(mag_lim))
 ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], s = 20,marker = '^', label = 'MSO (Ks < 14.5)', color = '#ff7f0e')
