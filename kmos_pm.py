@@ -226,22 +226,34 @@ ax[1].scatter(gns_young_all[:,3][bri]-gns_young_all[:,4][bri],gns_young_all[:,4]
 
 # %%
 # Plot isochrone
-# At the end of the script there is some line to build ischrones.
+# Around line ~300 there is some line to build ischrones.
 # In order to make it work, you must activate the base conda enviroment
 # age = np.log10(2.5e6) 
-age = np.log10(5e6) 
-AKs = 1.73
-iso = fits.open('/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/iso_%.2f_%.2f_08200_p00.fits'%(age, AKs))
+age = np.log10(1e6) 
+# age = 6.52
+p00 = 3
+AKs = 1.74
+iso = fits.open('/Users/amartinez/Desktop/PhD/Libralato_data/nsd_isochrones/iso_%.2f_%.2f_08200_p0%s.fits'%(age, AKs, p00))
 good_Ks = np.where(iso[1].data['m_hawki_Ks']<max(gns_all[:,4]  ))
-ax[1].plot(iso[1].data['m_hawki_H'][good_Ks]-iso[1].data['m_hawki_Ks'][good_Ks],iso[1].data['m_hawki_Ks'][good_Ks])
+ax[1].plot(iso[1].data['m_hawki_H'][good_Ks]-iso[1].data['m_hawki_Ks'][good_Ks],iso[1].data['m_hawki_Ks'][good_Ks],
+           label = 'Age = %.2f'%(10**age/1e6) )
+ax[1].legend()
 ax[1].invert_yaxis()
+ax[1].set_xlim(1.3,2)
+ax[1].set_ylim(17,10)
+# sys.exit(232)
 # %%
+lib_pruebas = '/Users/amartinez/Desktop/PhD/Libralato_data/pruebas/'
+
+Ra_cl, Dec_cl, mura_cl,mudec_cl, H_cl, Ks_cl,ms_id= np.loadtxt(lib_pruebas + 'clus_14996_16_55.txt', unpack=True)
+clus_gor_gal = SkyCoord(ra = Ra_cl, dec = Dec_cl, unit ='degree').galactic
 gns_gal = SkyCoord(ra = gns_all[:,0], dec = gns_all[:,1], unit = 'degree').galactic
 clus_gal = SkyCoord(ra = gns_young_all[:,0][bri], dec = gns_young_all[:,1][bri], unit = 'degree').galactic
 fig, ax = plt.subplots(1,1)
 # ax.scatter(gns_all[:,0], gns_all[:,1], )
 # ax.scatter(gns_young_all[:,0], gns_young_all[:,1] )
 ax.scatter(gns_gal.l, gns_gal.b )
+ax.scatter(clus_gor_gal.l, clus_gor_gal.b )
 # ax.scatter(gns_young_all[:,0][bri], gns_young_all[:,1][bri])
 ax.scatter(clus_gal.l, clus_gal.b, edgecolor = 'k')
 ax.invert_xaxis()
@@ -250,7 +262,7 @@ ax.set_ylabel('b (º)')
 
 
 
-sys.exit(232)
+
 # %%
 
 # ax[1].scatter(gns_young_all[:,3]-gns_young_all[:,4],gns_young_all[:,4],
@@ -679,30 +691,35 @@ esorex_ima_5= '/Users/amartinez/Desktop/PhD/KMOS/Kmos_iMac/p105_%s/comoving_grou
 image_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
 image_data = np.squeeze(image_data) 
 mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
-fig, ax = plt.subplots(subplot_kw={'projection': mapa})  # Adjust the figsize as needed
+
+# fig, ax = plt.subplots(subplot_kw={'projection': mapa})  # Adjust the figsize as needed
 
 fig = plt.figure()  # Adjust the figsize as needed
+
 ax = plt.subplot(projection=mapa)
+
 lon = ax.coords[0]
 lat = ax.coords[1]
+lon.grid(color='k', alpha=0.5, linestyle='solid')
 lon.set_ticks(spacing=5. * u.arcsec)
 lat.set_ticks(spacing=5. * u.arcsec)
 ax.tick_params(axis = 'y',which = 'both',labelright = False, labelleft = True)
 ax.imshow(image_data, vmin=-0.8e-20, vmax=0.45e-17, origin='lower', cmap='Greys', label ='KMOS')
-ax.scatter(clus_to_kpix[0][~brilli], clus_to_kpix[1][~brilli],c= '#1f77b4', s =15, label = 'M23 (Ks > %s)'%(mag_lim))
-ax.scatter(clus_to_kpix[0][brilli], clus_to_kpix[1][brilli], facecolor = 'none', edgecolors= '#1f77b4', s = 70,alpha = 1, label = 'M23 (Ks < %s)'%(mag_lim))
+ax.scatter(clus_to_kpix[0][~brilli], clus_to_kpix[1][~brilli],c= '#1f77b4', s =15, label = 'Mar23 (Ks > %s)'%(mag_lim))
+ax.scatter(clus_to_kpix[0][brilli], clus_to_kpix[1][brilli], facecolor = 'none', edgecolors= '#1f77b4', s = 70,alpha = 1, label = 'Mar23 (Ks < %s)'%(mag_lim))
 ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], s = 20,marker = '^', label = 'MSO (Ks < 14.5)', color = '#ff7f0e')
 # ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], s = 20,marker = '^', label = 'MSO (Ks < 14.5)', color = np.array(colorines)[bri])
 # ax.scatter(young_to_kpix[0][bri][m23_young],young_to_kpix[1][bri][m23_young], s = 10,marker = '^', color = 'lime')
-ax.scatter(young_to_kpix[0][bri][m23_young],young_to_kpix[1][bri][m23_young], s = 50,marker = '^', facecolor = 'none', edgecolor='lime', label ='MSO & M23')
+ax.scatter(young_to_kpix[0][bri][m23_young],young_to_kpix[1][bri][m23_young], s = 50,marker = '^', facecolor = 'none', edgecolor='lime', label ='MSO & Mar23')
 
 # ax.axhline(430, color ='r')
-ax.legend(fontsize = 8, loc = 3)
+ax.legend(fontsize = 8, loc = 1)
 ax.add_patch(Rectangle((0, 440), 650, 400, alpha = 0.5, color = 'k',fill = False, lw =2,ls ='dashed',label = 'ID'))
-ax.invert_xaxis()
-ax.invert_yaxis()
-# ax.grid()
+# ax.invert_xaxis()
+# ax.invert_yaxis()
 
+ax.grid()
+ax.axis('scaled')
 lon.set_ticks_visible(True)
 lon.set_ticklabel_visible(True)
 # lat.set_ticklabel_visible(True)
@@ -716,11 +733,41 @@ xticks = ax.get_xticks()
 yticks = ax.get_yticks()
 print("X-axis tick locations:", xticks)
 print("Y-axis tick locations:", yticks)
-# plt.savefig(pruebas + 'cluster_brg.png', dpi =300, bbox_inches = 'tight')
+l_pla = [359.999,359.97]
+b_ = 0.000
+b_pla = [b_,b_]
+gal_pla = SkyCoord(l = l_pla, b = b_pla, unit = 'degree', frame = 'galactic').fk5
+np.savetxt(pruebas  + 'gal_pla_coor.txt',np.array([gal_pla.ra.value,gal_pla.dec.value]).T)
+gal_to_kpix = wcs.wcs_world2pix(gal_pla.ra,gal_pla.dec,1)
+ax.set_xlim(max(clus_to_kpix[0])+30,min(clus_to_kpix[0])-20)
+ax.plot(gal_to_kpix[0], gal_to_kpix[1],
+        alpha = 0.7, color = 'k', ls = '-.')
+plt.savefig(pruebas + 'cluster_brg_gpla.png', dpi =300, bbox_inches = 'tight')
 # 
 # sys.exit(423)
 # ax.
 # %%
+image_data = fits.getdata(pruebas + 'brg_emission.fits', ext=0)
+mapa = WCS(fits.getheader(pruebas + 'brg_emission.fits', ext=0)).celestial
+# fig, ax = plt.subplots(1,1)
+ax = plt.subplot(projection=mapa)
+ax.imshow(image_data)
+ax.invert_xaxis()
+ax.invert_yaxis()
+ax.scatter(clus_to_kpix[0][~brilli], clus_to_kpix[1][~brilli],c= '#1f77b4', s =15, label = 'Mar23 (Ks > %s)'%(mag_lim))
+ax.scatter(clus_to_kpix[0][brilli], clus_to_kpix[1][brilli], facecolor = 'none', edgecolors= '#1f77b4', s = 70,alpha = 1, label = 'Mar23 (Ks < %s)'%(mag_lim))
+ax.scatter(young_to_kpix[0][bri],young_to_kpix[1][bri], s = 20,marker = '^', label = 'MSO (Ks < 14.5)', color = '#ff7f0e')
+lon = ax.coords[0]
+lat = ax.coords[1]
+# lon.grid(color='k', alpha=0.5, linestyle='solid')
+# lat.grid(color='k', alpha=0.5, linestyle='solid')
+lon.set_ticks(spacing=5. * u.arcsec)
+lat.set_ticks(spacing=5. * u.arcsec)
+ax.grid('aa')
+
+# ax.grid()
+# %%
+
 # Create a latex table
 df = pd.DataFrame({'ID, type':[],
                    'RA, Dec(º)':[],
