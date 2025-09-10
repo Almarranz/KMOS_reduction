@@ -50,6 +50,10 @@ create the sof files with the SCI_RECONSTRUCTED and SKY_RECONTRUCTED files,
 runs the  **sky_tweak** algortim. Then crates a sof file with cubes subtracted 
 by the sky and the runs **kmos_combine --method=header**  on it to generate 
 the combined image.
+
+🚨🚨🚨🚨🚨⚠️⚠️⚠️⚠️⚠️ WARNING ⚠️⚠️⚠️⚠️⚠️🚨🚨🚨🚨🚨
+In the instruction to buidl the ``data.sof`` file that you need to run the ``sky_teawk`` recipie
+say that you have to add SKY_CUBE and OBJECT_CUBE at the end of the path, but it is an typo. You have to add **CUBE_SKY** and **CUBE_OBJETC**
 > Note: you have to specify the folders with the scicience and sky cubes are 
 > in the script. Also, specify if you have **singles_cubes** or ** reconstructed_cubes**
 
